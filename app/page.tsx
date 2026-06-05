@@ -40,6 +40,12 @@ export default function CalendarPage() {
   const [members, setMembers] = useState<FamilyMember[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newAssignedTo, setNewAssignedTo] = useState('')
+  const [saving, setSaving] = useState(false)
+
   const monthKey = activeDate ? format(activeDate, 'yyyy-MM') : ''
 
   useEffect(() => {
@@ -74,7 +80,10 @@ export default function CalendarPage() {
 
   function getAppointments(date: Date): Appointment[] {
     const key = format(date, 'yyyy-MM-dd')
-    return appointments.filter((a) => a.event_date.startsWith(key))
+    return appointments.filter((a) => {
+      // Strip time, just compare date string directly
+      return a.event_date.slice(0, 10) === key
+    })
   }
 
   function getMemberColor(name: string): string {
@@ -177,6 +186,12 @@ export default function CalendarPage() {
                     key={day.toISOString()}
                     className={`h-[120px] p-2 border-b border-r border-stone-50 ${!inMonth ? 'opacity-40' : ''
                       }`}
+                    onClick={() => {
+                      setSelectedDay(day)
+                      setNewTitle('')
+                      setNewAssignedTo(members[0]?.name ?? '')
+                      setModalOpen(true)
+                    }}
                   >
                     {/* Date number */}
                     <div className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium mb-1 ${today
@@ -214,6 +229,66 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+      {/* Add appointment modal */}
+      {modalOpen && selectedDay && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50" onClick={() => setModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-stone-800 mb-1">Add Appointment</h2>
+            <p className="text-stone-400 text-sm mb-4">{format(selectedDay, 'MMMM d, yyyy')}</p>
+
+            <input
+              type="text"
+              placeholder="Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-stone-300"
+            />
+
+            <select
+              value={newAssignedTo}
+              onChange={(e) => setNewAssignedTo(e.target.value)}
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-stone-300"
+            >
+              {members.map((m) => (
+                <option key={m.name} value={m.name}>{m.name}</option>
+              ))}
+            </select>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="flex-1 py-2 rounded-lg border border-stone-200 text-stone-600 text-sm hover:bg-stone-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newTitle.trim()) return
+                  setSaving(true)
+                  await fetch('/api/appointments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: newTitle,
+                      event_date: format(selectedDay, 'yyyy-MM-dd'),
+                      assigned_to: newAssignedTo,
+                    }),
+                  })
+                  // Refresh data
+                  const eventsData = await fetch(`/api/events?month=${monthKey}`).then((r) => r.json())
+                  setAppointments(eventsData.appointments || [])
+                  setSaving(false)
+                  setModalOpen(false)
+                }}
+                disabled={saving}
+                className="flex-1 py-2 rounded-lg bg-stone-800 text-white text-sm hover:bg-stone-700 transition disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
