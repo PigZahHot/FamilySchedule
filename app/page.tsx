@@ -46,6 +46,10 @@ export default function CalendarPage() {
   const [newAssignedTo, setNewAssignedTo] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
+  const [apptModalOpen, setApptModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   const monthKey = activeDate ? format(activeDate, 'yyyy-MM') : ''
 
   useEffect(() => {
@@ -212,13 +216,18 @@ export default function CalendarPage() {
                     {appts.map((a) => (
                       <div
                         key={a.id}
-                        className="text-xs rounded-md px-1.5 py-0.5 mb-0.5 text-white truncate"
+                        className="text-xs rounded-md px-1.5 py-0.5 mb-0.5 text-white truncate cursor-pointer hover:opacity-80 transition"
                         style={{ backgroundColor: getMemberColor(a.assigned_to) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedAppt(a)
+                          setApptModalOpen(true)
+                        }}
                       >
                         {a.title}
                       </div>
                     ))}
-                  </div>
+                                      </div>
                 )
               })}
               {/* Empty padding cells */}
@@ -284,6 +293,45 @@ export default function CalendarPage() {
                 className="flex-1 py-2 rounded-lg bg-stone-800 text-white text-sm hover:bg-stone-700 transition disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {apptModalOpen && selectedAppt && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50" onClick={() => setApptModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-stone-800 mb-1">{selectedAppt.title}</h2>
+            <p className="text-stone-400 text-sm mb-1">{selectedAppt.event_date.slice(0, 10)}</p>
+            <div className="flex items-center gap-1.5 mb-6">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getMemberColor(selectedAppt.assigned_to) }} />
+              <span className="text-stone-600 text-sm">{selectedAppt.assigned_to}</span>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setApptModalOpen(false)}
+                className="flex-1 py-2 rounded-lg border border-stone-200 text-stone-600 text-sm hover:bg-stone-50 transition"
+              >
+                Close
+              </button>
+              <button
+                onClick={async () => {
+                  setDeleting(true)
+                  await fetch('/api/appointments', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: selectedAppt.id }),
+                  })
+                  const eventsData = await fetch(`/api/events?month=${monthKey}`).then((r) => r.json())
+                  setAppointments(eventsData.appointments || [])
+                  setDeleting(false)
+                  setApptModalOpen(false)
+                }}
+                disabled={deleting}
+                className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm transition disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
