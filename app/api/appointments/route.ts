@@ -15,3 +15,14 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(result.rows[0])
 }
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+
+  if (!id) {
+    return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  }
+
+  await pool.query(`DELETE FROM appointments WHERE id = $1`, [id])
+  return NextResponse.json({ ok: true })
+}
