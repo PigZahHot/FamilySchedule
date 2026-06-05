@@ -95,7 +95,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f5f0e8' }}>
+    <div className="page-wrapper">
       <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
 
         {/* Header */}

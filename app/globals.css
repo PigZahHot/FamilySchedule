@@ -3,24 +3,35 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --page-bg: #f5f0e8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-jakarta);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ─── Layout ─────────────────────────────────────────── */
+
+.page-wrapper {
+  min-height: 100vh;
+  background-color: var(--page-bg);
+}
+
+/* ─── Member colour utility ──────────────────────────── */
+/*
+  Set  --member-color  as an inline CSS variable on the element,
+  then add this class to apply it as the background colour.
+  Example:
+    style={{ '--member-color': '#e74c3c' } as React.CSSProperties}
+    className="... member-color"
+*/
+.member-color {
+  background-color: var(--member-color);
 }

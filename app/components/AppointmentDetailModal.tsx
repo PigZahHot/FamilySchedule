@@ -31,7 +31,7 @@ export default function AppointmentDetailModal({
         </div>
 
         <div className="flex items-center gap-2 bg-stone-50 rounded-xl px-4 py-3 mb-5">
-          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: memberColor }} />
+          <span className="w-3 h-3 rounded-full flex-shrink-0 member-color" style={{ '--member-color': memberColor } as React.CSSProperties} />
           <span className="text-stone-700 text-sm font-medium">{appointment.assigned_to}</span>
         </div>
 

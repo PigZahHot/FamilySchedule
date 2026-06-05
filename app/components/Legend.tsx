@@ -12,7 +12,7 @@ export default function Legend({ members }: LegendProps) {
           key={m.name}
           className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-sm text-sm text-stone-700 font-medium"
         >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.theme_color }} />
+          <span className="w-2 h-2 rounded-full member-color" style={{ '--member-color': m.theme_color } as React.CSSProperties} />
           {m.name}
         </div>
       ))}
