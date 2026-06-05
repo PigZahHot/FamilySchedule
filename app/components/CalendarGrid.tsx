@@ -99,8 +99,8 @@ export default function CalendarGrid({
                       e.stopPropagation()
                       onApptClick(a)
                     }}
-                    className="text-xs rounded-lg px-1.5 py-0.5 mb-0.5 text-white truncate cursor-pointer hover:opacity-80 transition font-medium"
-                    style={{ backgroundColor: getMemberColor(a.assigned_to, members) }}
+                    className="text-xs rounded-lg px-1.5 py-0.5 mb-0.5 text-white truncate cursor-pointer hover:opacity-80 transition font-medium member-color"
+                    style={{ '--member-color': getMemberColor(a.assigned_to, members) } as React.CSSProperties}
                   >
                     {a.title}
                   </div>
