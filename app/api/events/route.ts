@@ -3,6 +3,11 @@ import pool from '@/lib/db'
 import { calculateShift } from '@/lib/shift'
 import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns'
 
+function parseAnchorDate(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day)
+}
+
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl
     const monthParam = searchParams.get('month')
@@ -36,8 +41,9 @@ export async function GET(req: NextRequest) {
     const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd })
     const shiftDays = days.map((date) => {
         const dateStr = date.toISOString().split('T')[0]
+        const [y, m, d] = dateStr.split('-').map(Number)
+        const localDate = new Date(y, m - 1, d)
 
-        // Check for exception override first
         const exception = exceptions.find((e) => e.override_date === dateStr)
         if (exception) {
             return {
@@ -46,9 +52,8 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // Otherwise calculate from shift engine
         const shift = shiftConfig
-            ? calculateShift(date, new Date(shiftConfig.anchor_date), shiftConfig.anchor_shift_type)
+            ? calculateShift(localDate, parseAnchorDate(shiftConfig.anchor_date), shiftConfig.anchor_shift_type)
             : null
 
         return { date: dateStr, shift }
