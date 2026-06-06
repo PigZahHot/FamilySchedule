@@ -17,6 +17,7 @@ export type Appointment = {
 }
 
 export type FamilyMember = {
+  id: number
   name: string
   theme_color: string
 }

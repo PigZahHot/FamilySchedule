@@ -7,6 +7,7 @@ import CalendarGrid from '@/app/components/CalendarGrid'
 import Legend from '@/app/components/Legend'
 import AddAppointmentModal from '@/app/components/AddAppointmentModal'
 import AppointmentDetailModal from '@/app/components/AppointmentDetailModal'
+import DayDetailModal from '@/app/components/DayDetailModal'
 
 export default function CalendarPage() {
   const [activeDate, setActiveDate] = useState<Date | null>(null)
@@ -24,6 +25,10 @@ export default function CalendarPage() {
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
   const [apptModalOpen, setApptModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  const [dayDetailOpen, setDayDetailOpen] = useState(false)
+  const [dayDetailDay, setDayDetailDay] = useState<Date | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
 
   useEffect(() => {
     setActiveDate(new Date())
@@ -94,6 +99,19 @@ export default function CalendarPage() {
     setApptModalOpen(false)
   }
 
+  async function handleEdit(updated: { title: string; assigned_to: string; event_date: string }) {
+    if (!selectedAppt) return
+    setEditSaving(true)
+    await fetch('/api/appointments', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: selectedAppt.id, ...updated }),
+    })
+    await refreshAppointments()
+    setEditSaving(false)
+    setApptModalOpen(false)
+  }
+
   return (
     <div className="page-wrapper">
       <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
@@ -145,14 +163,16 @@ export default function CalendarPage() {
           startPadding={startPadding}
           endPadding={endPadding}
           onDayClick={(day) => {
-            setSelectedDay(day)
-            setNewTitle('')
-            setNewAssignedTo(members[0]?.name ?? '')
-            setModalOpen(true)
+            setDayDetailDay(day)
+            setDayDetailOpen(true)
           }}
           onApptClick={(appt) => {
             setSelectedAppt(appt)
             setApptModalOpen(true)
+          }}
+          onDateNumberClick={(day) => {
+            setDayDetailDay(day)
+            setDayDetailOpen(true)
           }}
         />
       </div>
@@ -176,9 +196,35 @@ export default function CalendarPage() {
         <AppointmentDetailModal
           appointment={selectedAppt}
           memberColor={getMemberColor(selectedAppt.assigned_to)}
+          members={members}
           deleting={deleting}
+          saving={editSaving}
           onClose={() => setApptModalOpen(false)}
           onDelete={handleDelete}
+          onSave={handleEdit}
+        />
+      )}
+
+      {dayDetailOpen && dayDetailDay && (
+        <DayDetailModal
+          day={dayDetailDay}
+          appointments={appointments.filter(
+            (a) => a.event_date.slice(0, 10) === format(dayDetailDay, 'yyyy-MM-dd')
+          )}
+          members={members}
+          onClose={() => setDayDetailOpen(false)}
+          onAddClick={() => {
+            setSelectedDay(dayDetailDay)
+            setNewTitle('')
+            setNewAssignedTo(members[0]?.name ?? '')
+            setDayDetailOpen(false)
+            setModalOpen(true)
+          }}
+          onApptClick={(appt) => {
+            setSelectedAppt(appt)
+            setDayDetailOpen(false)
+            setApptModalOpen(true)
+          }}
         />
       )}
     </div>

@@ -14,6 +14,7 @@ interface Props {
   endPadding: number
   onDayClick: (day: Date) => void
   onApptClick: (appt: Appointment) => void
+  onDateNumberClick: (day: Date) => void
 }
 
 function getShift(date: Date, shiftDays: ShiftDay[]): ShiftResult | null {
@@ -38,7 +39,7 @@ function shiftStyle(type: string) {
 
 export default function CalendarGrid({
   days, activeDate, shiftDays, appointments, members,
-  loading, startPadding, endPadding, onDayClick, onApptClick
+  loading, startPadding, endPadding, onDayClick, onApptClick, onDateNumberClick
 }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-stone-100">
@@ -52,8 +53,14 @@ export default function CalendarGrid({
       </div>
 
       {loading ? (
-        <div className="h-96 flex items-center justify-center text-stone-300 text-sm">
-          Loading...
+        <div className="grid grid-cols-7">
+          {Array.from({ length: 42 }).map((_, i) => (
+            <div key={i} className="h-[120px] p-2 border-b border-r border-stone-50">
+              <div className="w-6 h-6 rounded-full bg-stone-100 animate-pulse mb-2" />
+              <div className="h-3 rounded-lg bg-stone-100 animate-pulse mb-1.5 w-3/4" />
+              <div className="h-3 rounded-lg bg-stone-100 animate-pulse w-1/2" />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-7">
@@ -71,19 +78,20 @@ export default function CalendarGrid({
               <div
                 key={day.toISOString()}
                 onClick={() => onDayClick(day)}
-                className={`h-[120px] p-2 border-b border-r border-stone-50 cursor-pointer transition-colors hover:bg-stone-50/70 ${
-                  !inMonth ? 'opacity-30' : ''
-                } ${today ? 'bg-amber-50/30' : ''}`}
+                className={`h-[120px] p-2 border-b border-r border-stone-50 cursor-pointer transition-colors hover:bg-stone-50/70 ${!inMonth ? 'opacity-30' : ''
+                  } ${today ? 'bg-amber-50/30' : ''}`}
               >
                 {/* Top row: date + shift icon */}
                 <div className="flex items-center justify-between mb-1.5">
-                  <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold ${
-                    today
-                      ? 'bg-stone-800 text-white'
-                      : 'text-stone-500'
-                  }`}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDateNumberClick(day)
+                    }}
+                    className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold transition hover:bg-stone-200 ${today ? 'bg-stone-800 text-white' : 'text-stone-500'
+                      }`}>
                     {format(day, 'd')}
-                  </div>
+                  </button>
                   {shift && shift.type !== 'Off' && (
                     <span className="text-xs leading-none opacity-80">
                       {shiftStyle(shift.type).icon}
@@ -99,16 +107,22 @@ export default function CalendarGrid({
                       e.stopPropagation()
                       onApptClick(a)
                     }}
-                    className="text-xs rounded-lg px-1.5 py-0.5 mb-0.5 text-white truncate cursor-pointer hover:opacity-80 transition font-medium member-color"
-                    style={{ '--member-color': getMemberColor(a.assigned_to, members) } as React.CSSProperties}
+                    className="text-xs rounded-lg px-1.5 py-0.5 mb-0.5 text-white truncate cursor-pointer hover:opacity-80 transition font-medium"
+                    style={{ backgroundColor: getMemberColor(a.assigned_to, members) }}
                   >
                     {a.title}
                   </div>
                 ))}
                 {appts.length > 2 && (
-                  <div className="text-xs text-stone-400 px-1 mt-0.5 font-medium">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDateNumberClick(day)
+                    }}
+                    className="text-xs text-stone-400 px-1 mt-0.5 font-medium hover:text-stone-600 transition"
+                  >
                     +{appts.length - 2} more
-                  </div>
+                  </button>
                 )}
               </div>
             )

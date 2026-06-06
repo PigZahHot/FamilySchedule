@@ -26,3 +26,12 @@ export async function DELETE(req: NextRequest) {
   await pool.query(`DELETE FROM appointments WHERE id = $1`, [id])
   return NextResponse.json({ ok: true })
 }
+
+export async function PATCH(req: Request) {
+  const { id, title, assigned_to, event_date } = await req.json()
+  await pool.query(
+    'UPDATE appointments SET title = $1, assigned_to = $2, event_date = $3 WHERE id = $4',
+    [title, assigned_to, event_date, id]
+  )
+  return Response.json({ ok: true })
+}
