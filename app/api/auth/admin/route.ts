@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 const attempts = new Map<string, { count: number; resetAt: number }>()
 
 function generateToken(pin: string): string {
-    const secret = process.env.FAMILY_PASSPHRASE! // reuse existing secret
+    const secret = process.env.FAMILY_PASSPHRASE!
     return createHmac('sha256', secret).update(pin).digest('hex')
 }
 
-export { generateToken }
+function safeCompare(a: string, b: string): boolean {
+    const bufA = Buffer.from(a)
+    const bufB = Buffer.from(b)
+    if (bufA.length !== bufB.length) return false
+    return timingSafeEqual(bufA, bufB)
+}
 
 export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
@@ -30,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const { pin } = await req.json()
 
-    if (!pin || pin !== process.env.ADMIN_PIN) {
+    if (!pin || !safeCompare(pin, process.env.ADMIN_PIN!)) {
         return NextResponse.json({ message: 'Incorrect PIN.' }, { status: 401 })
     }
 
