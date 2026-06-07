@@ -1,10 +1,12 @@
 import { format } from 'date-fns'
 import { Appointment, FamilyMember } from '@/app/types/calendar'
+import { ShiftDay } from '@/app/types/calendar'
 
 interface Props {
     day: Date
     appointments: Appointment[]
     members: FamilyMember[]
+    shiftDays: ShiftDay[]
     onClose: () => void
     onAddClick: () => void
     onApptClick: (appt: Appointment) => void
@@ -15,7 +17,7 @@ function getMemberColor(name: string, members: FamilyMember[]): string {
 }
 
 export default function DayDetailModal({
-    day, appointments, members, onClose, onAddClick, onApptClick
+    day, appointments, members, shiftDays, onClose, onAddClick, onApptClick
 }: Props) {
     const formatted = day.toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -45,6 +47,18 @@ export default function DayDetailModal({
                         ×
                     </button>
                 </div>
+
+                {/* Holiday banner */}
+                {(() => {
+                    const key = format(day, 'yyyy-MM-dd')
+                    const holiday = shiftDays.find((s) => s.date === key)?.holiday
+                    return holiday ? (
+                        <div className="flex items-center gap-2 bg-red-50 rounded-xl px-3 py-2 mb-3">
+                            <span className="text-sm">🇵🇭</span>
+                            <span className="text-xs font-medium text-red-500">{holiday}</span>
+                        </div>
+                    ) : null
+                })()}
 
                 {/* Appointment list */}
                 <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
