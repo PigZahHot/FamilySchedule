@@ -22,9 +22,10 @@ export function proxy(req: NextRequest) {
     const isApiLogin = req.nextUrl.pathname === '/api/auth/login'
     const isAdminLogin = req.nextUrl.pathname === '/admin'
     const isApiAdminLogin = req.nextUrl.pathname === '/api/auth/admin'
+    const isAcceptBridge = req.nextUrl.pathname === '/api/auth/accept-bridge'
 
     // Let login page and login API through freely
-    if (isLoginPage || isApiLogin || isAdminLogin || isApiAdminLogin) {
+    if (isLoginPage || isApiLogin || isAdminLogin || isApiAdminLogin || isAcceptBridge) {
         return NextResponse.next()
     }
 
