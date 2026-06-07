@@ -23,6 +23,11 @@ function getShift(date: Date, shiftDays: ShiftDay[]): ShiftResult | null {
   return shiftDays.find((s) => s.date === key)?.shift ?? null
 }
 
+function getHoliday(date: Date, shiftDays: ShiftDay[]): string | null {
+  const key = format(date, 'yyyy-MM-dd')
+  return shiftDays.find((s) => s.date === key)?.holiday ?? null
+}
+
 function getDayAppointments(date: Date, appointments: Appointment[]): Appointment[] {
   const key = format(date, 'yyyy-MM-dd')
   return appointments.filter((a) => a.event_date.slice(0, 10) === key)
@@ -73,6 +78,7 @@ export default function CalendarGrid({
           {days.map((day) => {
             const shift = getShift(day, shiftDays)
             const appts = getDayAppointments(day, appointments)
+            const holiday = getHoliday(day, shiftDays)
             const today = isToday(day)
             const inMonth = isSameMonth(day, activeDate)
 
@@ -101,6 +107,13 @@ export default function CalendarGrid({
                     </span>
                   )}
                 </div>
+
+                {/* Holiday label — desktop only */}
+                {holiday && (
+                  <div className="hidden sm:block text-[9px] text-red-400 font-semibold truncate leading-tight mb-0.5">
+                    🇵🇭 {holiday}
+                  </div>
+                )}
 
                 {/* Desktop: appointment badges */}
                 <div className="hidden sm:block">
@@ -131,8 +144,11 @@ export default function CalendarGrid({
                 </div>
 
                 {/* Mobile: dot indicators */}
-                {appts.length > 0 && (
+                {(appts.length > 0 || holiday) && (
                   <div className="flex sm:hidden gap-0.5 flex-wrap mt-1">
+                    {holiday && (
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-400" />
+                    )}
                     {appts.slice(0, 3).map((a) => (
                       <span
                         key={a.id}

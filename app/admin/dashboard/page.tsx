@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { FamilyMember } from '@/app/types/calendar'
+import { QRCodeSVG } from 'qrcode.react'
 
 type ShiftConfig = {
     anchor_date: string
@@ -16,7 +17,7 @@ type ShiftException = {
     custom_title: string | null
 }
 
-type Section = 'members' | 'shift' | 'exceptions'
+type Section = 'members' | 'shift' | 'exceptions' | 'qr'
 
 export default function AdminDashboard() {
     const router = useRouter()
@@ -42,6 +43,12 @@ export default function AdminDashboard() {
     const [exTitle, setExTitle] = useState('')
     const [exSaving, setExSaving] = useState(false)
 
+    // QR state
+    const [qrToken, setQrToken] = useState<string | null>(null)
+    const [qrExpiry, setQrExpiry] = useState<Date | null>(null)
+    const [qrSecondsLeft, setQrSecondsLeft] = useState(0)
+    const [qrGenerating, setQrGenerating] = useState(false)
+
     useEffect(() => {
         fetch('/api/auth/admin/check').then((res) => {
             if (!res.ok) router.replace('/admin')
@@ -51,6 +58,31 @@ export default function AdminDashboard() {
     useEffect(() => { fetchMembers() }, [])
     useEffect(() => { if (activeSection === 'shift') fetchShiftConfig() }, [activeSection])
     useEffect(() => { if (activeSection === 'exceptions') fetchExceptions() }, [activeSection])
+
+    async function handleGenerateQR() {
+        setQrGenerating(true)
+        const res = await fetch('/api/admin/qr/generate', { method: 'POST' })
+        const data = await res.json()
+        const baseUrl = window.location.origin
+        setQrToken(`${baseUrl}/api/auth/accept-bridge?token=${data.token}`)
+        setQrExpiry(new Date(data.expiresAt))
+        setQrSecondsLeft(120)
+        setQrGenerating(false)
+    }
+
+    useEffect(() => {
+        if (!qrExpiry) return
+        const interval = setInterval(() => {
+            const secondsLeft = Math.max(0, Math.floor((qrExpiry.getTime() - Date.now()) / 1000))
+            setQrSecondsLeft(secondsLeft)
+            if (secondsLeft === 0) {
+                setQrToken(null)
+                setQrExpiry(null)
+                clearInterval(interval)
+            }
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [qrExpiry])
 
     async function fetchMembers() {
         const res = await fetch('/api/admin/members')
@@ -151,7 +183,8 @@ export default function AdminDashboard() {
     const navItems: { key: Section; label: string }[] = [
         { key: 'members', label: 'Family Members' },
         { key: 'shift', label: 'Shift Config' },
-        { key: 'exceptions', label: 'Shift Exceptions' },
+        { key: 'exceptions', label: 'Exceptions' },
+        { key: 'qr', label: 'QR Login' },
     ]
 
     return (
@@ -367,6 +400,41 @@ export default function AdminDashboard() {
                                 ))
                             )}
                         </div>
+                    </div>
+                )}
+
+                {/* — QR Login section — */}
+                {activeSection === 'qr' && (
+                    <div className="bg-white rounded-2xl border border-stone-100 p-5">
+                        <p className="text-xs font-semibold text-stone-500 mb-1">Authorize New Device</p>
+                        <p className="text-xs text-stone-400 mb-5">
+                            Generate a one-time QR code. Scan it on a new phone to log in without the passphrase. Valid for 2 minutes.
+                        </p>
+
+                        {qrToken ? (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="p-3 bg-white border border-stone-200 rounded-2xl">
+                                    <QRCodeSVG value={qrToken} size={200} />
+                                </div>
+                                <div className={`text-sm font-semibold ${qrSecondsLeft <= 30 ? 'text-red-500' : 'text-stone-500'}`}>
+                                    Expires in {qrSecondsLeft}s
+                                </div>
+                                <button
+                                    onClick={() => { setQrToken(null); setQrExpiry(null) }}
+                                    className="text-xs text-stone-400 hover:text-stone-600 transition"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleGenerateQR}
+                                disabled={qrGenerating}
+                                className="w-full py-2.5 bg-stone-800 hover:bg-stone-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-40"
+                            >
+                                {qrGenerating ? 'Generating...' : 'Generate QR Code'}
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
