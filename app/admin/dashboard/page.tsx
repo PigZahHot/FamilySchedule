@@ -70,6 +70,20 @@ export default function AdminDashboard() {
         setQrGenerating(false)
     }
 
+    useEffect(() => {
+        if (!qrExpiry) return
+        const interval = setInterval(() => {
+            const secondsLeft = Math.max(0, Math.floor((qrExpiry.getTime() - Date.now()) / 1000))
+            setQrSecondsLeft(secondsLeft)
+            if (secondsLeft === 0) {
+                setQrToken(null)
+                setQrExpiry(null)
+                clearInterval(interval)
+            }
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [qrExpiry])
+
     async function fetchMembers() {
         const res = await fetch('/api/admin/members')
         setMembers(await res.json())

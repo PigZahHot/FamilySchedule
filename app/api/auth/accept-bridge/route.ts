@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
     const hashedToken = createHash('sha256').update(token).digest('hex')
 
     const result = await pool.query(
-        `SELECT * FROM device_bridges WHERE hashed_token = $1 AND expires_at > NOW()`,
+        `SELECT * FROM device_bridges 
+        WHERE hashed_token = $1 
+        AND expires_at > NOW() AT TIME ZONE 'UTC'`,
         [hashedToken]
     )
 
