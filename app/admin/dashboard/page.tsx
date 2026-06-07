@@ -42,6 +42,12 @@ export default function AdminDashboard() {
     const [exTitle, setExTitle] = useState('')
     const [exSaving, setExSaving] = useState(false)
 
+    useEffect(() => {
+        fetch('/api/auth/admin/check').then((res) => {
+            if (!res.ok) router.replace('/admin')
+        })
+    }, [])
+
     useEffect(() => { fetchMembers() }, [])
     useEffect(() => { if (activeSection === 'shift') fetchShiftConfig() }, [activeSection])
     useEffect(() => { if (activeSection === 'exceptions') fetchExceptions() }, [activeSection])
@@ -182,8 +188,8 @@ export default function AdminDashboard() {
                             key={item.key}
                             onClick={() => setActiveSection(item.key)}
                             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${activeSection === item.key
-                                    ? 'bg-stone-800 text-white'
-                                    : 'text-stone-400 hover:text-stone-600'
+                                ? 'bg-stone-800 text-white'
+                                : 'text-stone-400 hover:text-stone-600'
                                 }`}
                         >
                             {item.label}

@@ -20,9 +20,11 @@ export function proxy(req: NextRequest) {
     const isValid = cookie?.value === expectedFamilyToken
     const isLoginPage = req.nextUrl.pathname === '/login'
     const isApiLogin = req.nextUrl.pathname === '/api/auth/login'
+    const isAdminLogin = req.nextUrl.pathname === '/admin'
+    const isApiAdminLogin = req.nextUrl.pathname === '/api/auth/admin'
 
     // Let login page and login API through freely
-    if (isLoginPage || isApiLogin) {
+    if (isLoginPage || isApiLogin || isAdminLogin || isApiAdminLogin) {
         return NextResponse.next()
     }
 
