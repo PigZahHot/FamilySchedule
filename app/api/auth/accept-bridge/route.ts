@@ -16,12 +16,14 @@ export async function GET(req: NextRequest) {
 
     const hashedToken = createHash('sha256').update(token).digest('hex')
 
+    console.log('Token from URL:', token)
+    console.log('Hashed:', hashedToken)
+
     const result = await pool.query(
-        `SELECT * FROM device_bridges 
-        WHERE hashed_token = $1 
-        AND expires_at > NOW() AT TIME ZONE 'UTC'`,
-        [hashedToken]
+        `SELECT * FROM device_bridges`,
+        []
     )
+    console.log('All rows:', result.rows)
 
     if (result.rows.length === 0) {
         return NextResponse.redirect(new URL('/login?error=expired', req.url))
