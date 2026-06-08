@@ -30,13 +30,19 @@ export function proxy(req: NextRequest) {
     }
 
     // Admin route protection
-    if (req.nextUrl.pathname.startsWith('/admin/dashboard')) {
+    const isAdminDashboard = req.nextUrl.pathname.startsWith('/admin/dashboard')
+    const isAdminApi = req.nextUrl.pathname.startsWith('/api/admin/')
+    
+    if (isAdminDashboard || isAdminApi) {
         const adminCookie = req.cookies.get('admin_session')
         const expectedToken = generateToken(
             process.env.ADMIN_PIN!,
             process.env.FAMILY_PASSPHRASE!
         )
         if (!adminCookie || adminCookie.value !== expectedToken) {
+            if (isAdminApi) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            }
             return NextResponse.redirect(new URL('/admin', req.url))
         }
     }
