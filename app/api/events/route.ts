@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
         new Set([getYear(rangeStart), getYear(rangeEnd)])
     )
 
-    const [appointmentsResult, shiftConfigResult, exceptionsResult, holidayMap] = await Promise.all([
+    const [appointmentsResult, shiftConfigResult, exceptionsResult, holidayMap, yearlyEventsResult] = await Promise.all([
         pool.query(
             `SELECT * FROM appointments WHERE event_date BETWEEN $1 AND $2`,
             [rangeStart, rangeEnd]
@@ -53,12 +53,13 @@ export async function GET(req: NextRequest) {
             [rangeStart, rangeEnd]
         ),
         fetchPhHolidays(years),
+        pool.query(`SELECT * FROM yearly_events`),
     ])
 
     const shiftConfig = shiftConfigResult.rows[0]
     const appointments = appointmentsResult.rows
     const exceptions = exceptionsResult.rows
-
+    const yearlyEvents = yearlyEventsResult.rows
     const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd })
     const shiftDays = days.map((date) => {
         const dateStr = date.toISOString().split('T')[0]
@@ -78,10 +79,20 @@ export async function GET(req: NextRequest) {
             ? calculateShift(localDate, parseAnchorDate(shiftConfig.anchor_date), shiftConfig.anchor_shift_type)
             : null
 
+        const yearlyEvent = yearlyEvents.find((e) => {
+            let targetDay = e.day;
+            // If it's a Feb 29 event, and the current year is not a leap year, show it on Feb 28
+            if (e.month === 2 && e.day === 29) {
+                const isLeapYear = (localDate.getFullYear() % 4 === 0 && localDate.getFullYear() % 100 !== 0) || (localDate.getFullYear() % 400 === 0);
+                if (!isLeapYear) targetDay = 28;
+            }
+            return e.month === localDate.getMonth() + 1 && targetDay === localDate.getDate();
+        })
+
         return {
             date: dateStr,
             shift,
-            holiday: holidayMap.get(dateStr) ?? null,
+            holiday: holidayMap.get(dateStr) ?? yearlyEvent?.title ?? null,
         }
     })
 
