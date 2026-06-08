@@ -29,6 +29,11 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: Request) {
   const { id, title, assigned_to, event_date } = await req.json()
+
+  if (!id || !title || !assigned_to || !event_date) {
+    return Response.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
   await pool.query(
     'UPDATE appointments SET title = $1, assigned_to = $2, event_date = $3 WHERE id = $4',
     [title, assigned_to, event_date, id]
