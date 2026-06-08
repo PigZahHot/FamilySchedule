@@ -7,7 +7,7 @@ import { QRCodeSVG } from 'qrcode.react'
 
 type ShiftConfig = { anchor_date: string; anchor_shift_type: 'Day' | 'Night' }
 type ShiftException = { id: number; override_date: string; override_type: string; custom_title: string | null }
-type Section = 'members' | 'shift' | 'exceptions' | 'qr'
+type Section = 'members' | 'shift' | 'exceptions' | 'yearly' | 'qr'
 
 const inputStyle = { border: '0.5px solid var(--fs-border)', background: 'var(--fs-bg)', color: 'var(--fs-text)' }
 
@@ -32,6 +32,11 @@ export default function AdminDashboard() {
     const [qrExpiry, setQrExpiry] = useState<Date | null>(null)
     const [qrSecondsLeft, setQrSecondsLeft] = useState(0)
     const [qrGenerating, setQrGenerating] = useState(false)
+    const [yearlyEvents, setYearlyEvents] = useState<{ id: number; title: string; month: number; day: number }[]>([])
+    const [yeTitle, setYeTitle] = useState('')
+    const [yeMonth, setYeMonth] = useState(1)
+    const [yeDay, setYeDay] = useState(1)
+    const [yeSaving, setYeSaving] = useState(false)
 
     useEffect(() => { fetch('/api/auth/admin/check').then((res) => { if (!res.ok) router.replace('/admin') }) }, [])
     useEffect(() => { fetchMembers() }, [])
@@ -84,6 +89,41 @@ export default function AdminDashboard() {
         await fetch('/api/admin/shift-exceptions', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
         await fetchExceptions()
     }
+    async function fetchYearlyEvents() {
+        const res = await fetch('/api/admin/yearly-events')
+        setYearlyEvents(await res.json())
+    }
+    useEffect(() => { if (activeSection === 'yearly') fetchYearlyEvents() }, [activeSection])
+    async function handleAddYearlyEvent() {
+        if (!yeTitle.trim()) return
+        
+        let maxDays = 31
+        if (yeMonth === 2) maxDays = 29
+        else if ([4, 6, 9, 11].includes(yeMonth)) maxDays = 30
+        
+        if (yeDay < 1 || yeDay > maxDays) {
+            alert('Invalid day for the selected month.')
+            return
+        }
+
+        setYeSaving(true)
+        await fetch('/api/admin/yearly-events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: yeTitle, month: yeMonth, day: yeDay }),
+        })
+        setYeTitle('')
+        await fetchYearlyEvents()
+        setYeSaving(false)
+    }
+    async function handleDeleteYearlyEvent(id: number) {
+        await fetch('/api/admin/yearly-events', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+        })
+        await fetchYearlyEvents()
+    }
     async function handleGenerateQR() {
         setQrGenerating(true)
         const res = await fetch('/api/admin/qr/generate', { method: 'POST' }); const data = await res.json()
@@ -94,7 +134,8 @@ export default function AdminDashboard() {
 
     const navItems: { key: Section; label: string }[] = [
         { key: 'members', label: 'Members' }, { key: 'shift', label: 'Shift' },
-        { key: 'exceptions', label: 'Exceptions' }, { key: 'qr', label: 'QR Login' },
+        { key: 'exceptions', label: 'Exceptions' }, { key: 'yearly', label: 'Yearly' },
+        { key: 'qr', label: 'QR Login' },
     ]
 
     return (
@@ -252,6 +293,60 @@ export default function AdminDashboard() {
                                         </p>
                                     </div>
                                     <button onClick={() => handleDeleteException(ex.id)}
+                                        className="text-xs transition hover:opacity-70" style={{ color: '#ef4444' }}>Delete</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Yearly Events */}
+                {activeSection === 'yearly' && (
+                    <div className="space-y-4">
+                        <div className="fs-card rounded-2xl p-4">
+                            <p className="fs-section-label mb-3">Add Yearly Event</p>
+                            <div className="space-y-2">
+                                <input type="text" placeholder="Title (e.g. Carl's Birthday)"
+                                    value={yeTitle} onChange={(e) => setYeTitle(e.target.value)}
+                                    className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none" style={inputStyle} />
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="fs-section-label mb-1 block">Month</label>
+                                        <select value={yeMonth} onChange={(e) => setYeMonth(Number(e.target.value))}
+                                            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none" style={inputStyle}>
+                                            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
+                                                <option key={m} value={i + 1}>{m}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="fs-section-label mb-1 block">Day</label>
+                                        <input type="number" min={1} max={yeMonth === 2 ? 29 : [4, 6, 9, 11].includes(yeMonth) ? 30 : 31} value={yeDay}
+                                            onChange={(e) => setYeDay(Number(e.target.value))}
+                                            className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none" style={inputStyle} />
+                                    </div>
+                                </div>
+                                <button onClick={handleAddYearlyEvent} disabled={yeSaving || !yeTitle.trim()}
+                                    className="w-full py-2 rounded-xl text-xs font-medium transition disabled:opacity-40"
+                                    style={{ background: 'var(--fs-honey)', color: '#fff' }}>
+                                    {yeSaving ? 'Saving...' : 'Add Event'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="fs-card rounded-2xl overflow-hidden">
+                            {yearlyEvents.length === 0 ? (
+                                <p className="text-sm text-center py-8" style={{ color: 'var(--fs-text-faint)' }}>No yearly events yet</p>
+                            ) : yearlyEvents.map((ev) => (
+                                <div key={ev.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-0"
+                                    style={{ borderColor: 'var(--fs-border-light)' }}>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium" style={{ color: 'var(--fs-text)' }}>{ev.title}</p>
+                                        <p className="text-xs" style={{ color: 'var(--fs-text-muted)' }}>
+                                            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][ev.month - 1]} {ev.day}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => handleDeleteYearlyEvent(ev.id)}
                                         className="text-xs transition hover:opacity-70" style={{ color: '#ef4444' }}>Delete</button>
                                 </div>
                             ))}
