@@ -51,7 +51,7 @@ export default function CalendarGrid({
       {loading ? (
         <div className="grid grid-cols-7">
           {Array.from({ length: 42 }).map((_, i) => (
-            <div key={i} className="h-[60px] sm:h-[110px] p-1 sm:p-2 border-b border-r border-[var(--fs-border-light)]">
+            <div key={i} className="aspect-square sm:aspect-auto sm:h-[120px] p-1 sm:p-2 border-b border-r border-[var(--fs-border-light)]">
               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
               <div className="h-2 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
               <div className="h-2 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
@@ -61,7 +61,7 @@ export default function CalendarGrid({
       ) : (
         <div className="grid grid-cols-7">
           {Array.from({ length: startPadding }).map((_, i) => (
-            <div key={`pad-${i}`} className="h-[60px] sm:h-[110px] border-b border-r border-[var(--fs-border-light)]"
+            <div key={`pad-${i}`} className="aspect-square sm:aspect-auto sm:h-[120px] border-b border-r border-[var(--fs-border-light)]"
               style={{ background: 'var(--fs-bg)' }} />
           ))}
 
@@ -77,7 +77,7 @@ export default function CalendarGrid({
               <div
                 key={day.toISOString()}
                 onClick={() => onDayClick(day)}
-                className={`fs-cell h-[60px] sm:h-[110px] p-1 sm:p-2 border-b border-r border-[var(--fs-border-light)] cursor-pointer transition-colors hover:bg-[var(--fs-bg)] ${today ? 'fs-cell-today' : ''} ${!inMonth ? 'opacity-30' : ''}`}
+                className={`fs-cell aspect-square sm:aspect-auto sm:h-[120px] p-1 sm:p-2 border-b border-r border-[var(--fs-border-light)] cursor-pointer transition-colors hover:bg-[var(--fs-bg)] ${today ? 'fs-cell-today' : ''} ${!inMonth ? 'opacity-30' : ''}`}
               >
                 {/* Top row: date + shift icon */}
                 <div className="flex items-start justify-between mb-0.5 sm:mb-1.5">
@@ -159,7 +159,7 @@ export default function CalendarGrid({
           })}
 
           {Array.from({ length: endPadding }).map((_, i) => (
-            <div key={`end-pad-${i}`} className="h-[60px] sm:h-[110px] border-b border-r border-[var(--fs-border-light)]"
+            <div key={`end-pad-${i}`} className="aspect-square sm:aspect-auto sm:h-[120px] border-b border-r border-[var(--fs-border-light)]"
               style={{ background: 'var(--fs-bg)' }} />
           ))}
         </div>
