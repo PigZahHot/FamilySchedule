@@ -32,11 +32,13 @@ export default function AdminDashboard() {
     const [qrExpiry, setQrExpiry] = useState<Date | null>(null)
     const [qrSecondsLeft, setQrSecondsLeft] = useState(0)
     const [qrGenerating, setQrGenerating] = useState(false)
-    const [yearlyEvents, setYearlyEvents] = useState<{ id: number; title: string; month: number; day: number }[]>([])
+    const [yearlyEvents, setYearlyEvents] = useState<{ id: number; title: string; month: number; day: number; label: string }[]>([])
     const [yeTitle, setYeTitle] = useState('')
     const [yeMonth, setYeMonth] = useState(1)
     const [yeDay, setYeDay] = useState(1)
+    const [yeLabel, setYeLabel] = useState('Birthday')
     const [yeSaving, setYeSaving] = useState(false)
+    const [editingYearlyEvent, setEditingYearlyEvent] = useState<{ id: number; title: string; month: number; day: number; label: string } | null>(null)
 
     useEffect(() => { fetch('/api/auth/admin/check').then((res) => { if (!res.ok) router.replace('/admin') }) }, [])
     useEffect(() => { fetchMembers() }, [])
@@ -110,9 +112,31 @@ export default function AdminDashboard() {
         await fetch('/api/admin/yearly-events', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: yeTitle, month: yeMonth, day: yeDay }),
+            body: JSON.stringify({ title: yeTitle, month: yeMonth, day: yeDay, label: yeLabel }),
         })
         setYeTitle('')
+        await fetchYearlyEvents()
+        setYeSaving(false)
+    }
+    async function handleEditYearlyEvent() {
+        if (!editingYearlyEvent || !editingYearlyEvent.title.trim()) return
+
+        let maxDays = 31
+        if (editingYearlyEvent.month === 2) maxDays = 29
+        else if ([4, 6, 9, 11].includes(editingYearlyEvent.month)) maxDays = 30
+
+        if (editingYearlyEvent.day < 1 || editingYearlyEvent.day > maxDays) {
+            alert('Invalid day for the selected month.')
+            return
+        }
+
+        setYeSaving(true)
+        await fetch('/api/admin/yearly-events', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(editingYearlyEvent),
+        })
+        setEditingYearlyEvent(null)
         await fetchYearlyEvents()
         setYeSaving(false)
     }
@@ -309,6 +333,16 @@ export default function AdminDashboard() {
                                 <input type="text" placeholder="Title (e.g. Carl's Birthday)"
                                     value={yeTitle} onChange={(e) => setYeTitle(e.target.value)}
                                     className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none" style={inputStyle} />
+                                <div>
+                                    <label className="fs-section-label mb-1 block">Type</label>
+                                    <select value={yeLabel} onChange={(e) => setYeLabel(e.target.value)}
+                                        className="w-full rounded-xl px-3 py-2 text-sm focus:outline-none" style={inputStyle}>
+                                        <option value="Birthday">🎂 Birthday</option>
+                                        <option value="Anniversary">💍 Anniversary</option>
+                                        <option value="Holiday">🎉 Holiday</option>
+                                        <option value="Event">📅 Event</option>
+                                    </select>
+                                </div>
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <label className="fs-section-label mb-1 block">Month</label>
@@ -340,14 +374,58 @@ export default function AdminDashboard() {
                             ) : yearlyEvents.map((ev) => (
                                 <div key={ev.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-0"
                                     style={{ borderColor: 'var(--fs-border-light)' }}>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium" style={{ color: 'var(--fs-text)' }}>{ev.title}</p>
-                                        <p className="text-xs" style={{ color: 'var(--fs-text-muted)' }}>
-                                            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][ev.month - 1]} {ev.day}
-                                        </p>
-                                    </div>
-                                    <button onClick={() => handleDeleteYearlyEvent(ev.id)}
-                                        className="text-xs transition hover:opacity-70" style={{ color: '#ef4444' }}>Delete</button>
+                                    {editingYearlyEvent?.id === ev.id ? (
+                                        <>
+                                            <div className="flex-1 space-y-1.5">
+                                                <input type="text" value={editingYearlyEvent.title}
+                                                    onChange={(e) => setEditingYearlyEvent({ ...editingYearlyEvent, title: e.target.value })}
+                                                    className="w-full rounded-lg px-2 py-1 text-sm focus:outline-none" style={inputStyle} />
+                                                <div className="flex gap-1.5">
+                                                    <select value={editingYearlyEvent.label}
+                                                        onChange={(e) => setEditingYearlyEvent({ ...editingYearlyEvent, label: e.target.value })}
+                                                        className="flex-1 rounded-lg px-2 py-1 text-xs focus:outline-none" style={inputStyle}>
+                                                        <option value="Birthday">🎂 Birthday</option>
+                                                        <option value="Anniversary">💍 Anniversary</option>
+                                                        <option value="Holiday">🎉 Holiday</option>
+                                                        <option value="Event">📅 Event</option>
+                                                    </select>
+                                                    <select value={editingYearlyEvent.month}
+                                                        onChange={(e) => setEditingYearlyEvent({ ...editingYearlyEvent, month: Number(e.target.value), day: 1 })}
+                                                        className="rounded-lg px-2 py-1 text-xs focus:outline-none" style={inputStyle}>
+                                                        {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                                                            <option key={m} value={i + 1}>{m}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input type="number" min={1}
+                                                        max={editingYearlyEvent.month === 2 ? 29 : [4,6,9,11].includes(editingYearlyEvent.month) ? 30 : 31}
+                                                        value={editingYearlyEvent.day}
+                                                        onChange={(e) => setEditingYearlyEvent({ ...editingYearlyEvent, day: Number(e.target.value) })}
+                                                        className="w-14 rounded-lg px-2 py-1 text-xs focus:outline-none" style={inputStyle} />
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-1 items-end">
+                                                <button onClick={handleEditYearlyEvent} disabled={yeSaving}
+                                                    className="text-xs font-medium transition hover:opacity-70" style={{ color: 'var(--fs-honey-dark)' }}>
+                                                    {yeSaving ? 'Saving...' : 'Save'}
+                                                </button>
+                                                <button onClick={() => setEditingYearlyEvent(null)}
+                                                    className="text-xs transition hover:opacity-70" style={{ color: 'var(--fs-text-muted)' }}>Cancel</button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium" style={{ color: 'var(--fs-text)' }}>{ev.title}</p>
+                                                <p className="text-xs" style={{ color: 'var(--fs-text-muted)' }}>
+                                                    {ev.label === 'Birthday' ? '🎂' : ev.label === 'Anniversary' ? '💍' : ev.label === 'Holiday' ? '🎉' : '📅'} {ev.label} · {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][ev.month - 1]} {ev.day}
+                                                </p>
+                                            </div>
+                                            <button onClick={() => setEditingYearlyEvent(ev)}
+                                                className="text-xs transition hover:opacity-70" style={{ color: 'var(--fs-text-muted)' }}>Edit</button>
+                                            <button onClick={() => handleDeleteYearlyEvent(ev.id)}
+                                                className="text-xs transition hover:opacity-70" style={{ color: '#ef4444' }}>Delete</button>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>

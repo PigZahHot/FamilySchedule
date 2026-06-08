@@ -92,7 +92,8 @@ export async function GET(req: NextRequest) {
         return {
             date: dateStr,
             shift,
-            holiday: holidayMap.get(dateStr) ?? yearlyEvent?.title ?? null,
+            holiday: holidayMap.get(dateStr) ?? null,
+            yearlyEvent: yearlyEvent ? { title: yearlyEvent.title, label: yearlyEvent.label } : null,
         }
     })
 

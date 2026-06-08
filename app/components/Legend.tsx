@@ -12,8 +12,8 @@ export default function Legend({ members }: LegendProps) {
         </div>
       ))}
       <div className="lpill">
-        <span className="fs-dot fs-dot-holiday" />
-        Holiday
+        <span className="text-[10px]">🎂💍🎉</span>
+        Yearly Event
       </div>
     </div>
   )

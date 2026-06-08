@@ -7,6 +7,7 @@ export type ShiftDay = {
   date: string
   shift: ShiftResult | null
   holiday?: string | null
+  yearlyEvent?: { title: string; label: string } | null
 }
 
 export type Appointment = {
