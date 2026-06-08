@@ -1,37 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --page-bg: #f5f0e8;
+@theme {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  --color-fs-bg: #FDFAF5;
+  --color-fs-bg-2: #F5EFE0;
+  --color-fs-surface: #FFFFFF;
+  --color-fs-honey: #E8A020;
+  --color-fs-honey-dark: #854F0B;
+  --color-fs-text: #1C1A17;
+  --color-fs-muted: #6B6560;
+  --color-fs-border: #E8E2D9;
+  --color-fs-day: #378ADD;
+  --color-fs-night: #7F77DD;
+  --color-fs-holiday: #E24B4A;
+  --color-fs-carl: #3B82F6;
+  --color-fs-mom: #10B981;
+  --color-fs-dad: #8B5CF6;
+
+  --radius-fs: 14px;
+  --radius-fs-sm: 8px;
+  --radius-fs-xs: 5px;
+
+  --shadow-fs-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  --shadow-fs: 0 2px 8px 0 rgb(0 0 0 / 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta);
+@layer base {
+  :root {
+    /* --- Surfaces --- */
+    --fs-bg: #FDFAF5;
+    /* page background */
+    --fs-bg-2: #F5EFE0;
+    /* header / topbar */
+    --fs-surface: #FFFFFF;
+    /* cards, cells */
+    --fs-surface-2: #FDFAF5;
+    /* sidebar, legend pills */
+
+    /* --- Honey accent --- */
+    --fs-honey: #E8A020;
+    --fs-honey-dark: #854F0B;
+    --fs-honey-light: #FAC75533;
+    --fs-honey-border: #EF9F2755;
+
+    /* --- Text --- */
+    --fs-text: #1C1A17;
+    --fs-text-muted: #6B6560;
+    --fs-text-faint: #B0A99F;
+
+    /* --- Border --- */
+    --fs-border: #E8E2D9;
+    --fs-border-light: #F0EBE3;
+
+    /* --- Shift colors --- */
+    --fs-day: #378ADD;
+    --fs-day-bg: #E6F1FB;
+    --fs-day-text: #185FA5;
+    --fs-night: #7F77DD;
+    --fs-night-bg: #EEEDFE;
+    --fs-night-text: #534AB7;
+    --fs-off-bg: #F1EFE8;
+    --fs-off-text: #5F5E5A;
+
+    /* --- Member colors --- */
+    --fs-carl: #3B82F6;
+    --fs-carl-bg: #3B82F620;
+    --fs-mom: #10B981;
+    --fs-mom-bg: #10B98120;
+    --fs-dad: #8B5CF6;
+    --fs-dad-bg: #8B5CF620;
+
+    /* --- Holiday --- */
+    --fs-holiday: #E24B4A;
+
+    /* --- Radius --- */
+    --fs-radius: 14px;
+    --fs-radius-sm: 8px;
+    --fs-radius-xs: 5px;
+
+    /* --- Shadow --- */
+    --fs-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+    --fs-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.08);
+  }
+
+  html {
+    background-color: var(--fs-bg);
+    color: var(--fs-text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-}
+@layer components {
 
-/* ─── Layout ─────────────────────────────────────────── */
+  /* --- Layout --- */
+  .fs-page {
+    @apply min-h-screen bg-fs-bg;
+  }
 
-.page-wrapper {
-  min-height: 100vh;
-  background-color: var(--page-bg);
-}
+  .fs-topbar {
+    background: var(--fs-bg-2);
+    border-bottom: 0.5px solid var(--fs-honey-border);
+  }
 
-/* ─── Member colour utility ──────────────────────────── */
-/*
-  Set  --member-color  as an inline CSS variable on the element,
-  then add this class to apply it as the background colour.
-  Example:
-    style={{ '--member-color': '#e74c3c' } as React.CSSProperties}
-    className="... member-color"
-*/
-.member-color {
-  background-color: var(--member-color);
+  .fs-card {
+    background: var(--fs-surface);
+    border: 0.5px solid var(--fs-border);
+    border-radius: var(--fs-radius-sm);
+    box-shadow: var(--fs-shadow-sm);
+  }
+
+  /* --- Tab bar --- */
+  .fs-tab-bar {
+    background: var(--fs-surface);
+    border-bottom: 0.5px solid var(--fs-border);
+  }
+
+  .fs-tab {
+    @apply text-[12px] font-medium px-4 py-2 border-b-2 border-transparent;
+    color: var(--fs-text-muted);
+  }
+
+  .fs-tab.active {
+    color: var(--fs-honey-dark);
+    border-bottom-color: var(--fs-honey);
+  }
+
+  /* --- Calendar cell --- */
+  .fs-cell {
+    background: var(--fs-surface);
+    border: 0.5px solid var(--fs-border-light);
+    border-radius: var(--fs-radius-xs);
+  }
+
+  .fs-cell-today {
+    border: 1.5px solid var(--fs-honey);
+  }
+
+  .fs-today-num {
+    background: var(--fs-honey);
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* --- Shift badges --- */
+  .fs-badge-day {
+    background: var(--fs-day-bg);
+    color: var(--fs-day-text);
+    @apply text-[9px] px-[5px] py-[1px] rounded-full font-medium;
+  }
+
+  .fs-badge-night {
+    background: var(--fs-night-bg);
+    color: var(--fs-night-text);
+    @apply text-[9px] px-[5px] py-[1px] rounded-full font-medium;
+  }
+
+  .fs-badge-off {
+    background: var(--fs-off-bg);
+    color: var(--fs-off-text);
+    @apply text-[9px] px-[5px] py-[1px] rounded-full font-medium;
+  }
+
+  /* --- Appointment chip --- */
+  .fs-chip {
+    @apply text-[10px] px-[5px] py-[1px] rounded-[4px] truncate font-medium;
+  }
+
+  .fs-chip-carl {
+    background: var(--fs-carl-bg);
+    color: var(--fs-day-text);
+  }
+
+  .fs-chip-mom {
+    background: var(--fs-mom-bg);
+    color: #0F6E56;
+  }
+
+  .fs-chip-dad {
+    background: var(--fs-dad-bg);
+    color: #4C1D95;
+  }
+
+  /* --- Member badge (sidebar/cards) --- */
+  .fs-member-badge {
+    @apply text-[10px] px-2 py-[2px] rounded-full font-medium;
+  }
+
+  .fs-member-badge-carl {
+    background: var(--fs-carl-bg);
+    color: var(--fs-day-text);
+  }
+
+  .fs-member-badge-mom {
+    background: var(--fs-mom-bg);
+    color: #0F6E56;
+  }
+
+  .fs-member-badge-dad {
+    background: var(--fs-dad-bg);
+    color: #4C1D95;
+  }
+
+  /* --- Dot indicators --- */
+  .fs-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .fs-dot-day {
+    background: var(--fs-day);
+  }
+
+  .fs-dot-night {
+    background: var(--fs-night);
+  }
+
+  .fs-dot-holiday {
+    background: var(--fs-holiday);
+  }
+
+  .fs-dot-carl {
+    background: var(--fs-carl);
+  }
+
+  .fs-dot-mom {
+    background: var(--fs-mom);
+  }
+
+  .fs-dot-dad {
+    background: var(--fs-dad);
+  }
+
+  /* --- Icon button --- */
+  .fs-icon-btn {
+    @apply w-8 h-8 flex items-center justify-center rounded-[8px];
+    border: 0.5px solid var(--fs-honey-border);
+    background: var(--fs-surface);
+    color: var(--fs-honey-dark);
+  }
+
+  .fs-icon-btn-primary {
+    background: var(--fs-honey);
+    border-color: var(--fs-honey);
+    color: #fff;
+  }
+
+  /* --- Section label --- */
+  .fs-section-label {
+    @apply text-[10px] font-medium uppercase tracking-wide;
+    color: var(--fs-text-muted);
+  }
+
+  .lpill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--fs-surface);
+    border: 0.5px solid var(--fs-border);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fs-text);
+    box-shadow: var(--fs-shadow-sm);
+  }
 }

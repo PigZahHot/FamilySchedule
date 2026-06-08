@@ -10,16 +10,10 @@ import AppointmentDetailModal from '@/app/components/AppointmentDetailModal'
 import DayDetailModal from '@/app/components/DayDetailModal'
 
 type MonthCache = {
-  [monthKey: string]: {
-    shiftDays: ShiftDay[]
-    appointments: Appointment[]
-  }
+  [monthKey: string]: { shiftDays: ShiftDay[]; appointments: Appointment[] }
 }
 
-function getMonthKey(date: Date) {
-  return format(date, 'yyyy-MM')
-}
-
+function getMonthKey(date: Date) { return format(date, 'yyyy-MM') }
 function getMonthDays(date: Date) {
   const days = eachDayOfInterval({ start: startOfMonth(date), end: endOfMonth(date) })
   const startPadding = getDay(startOfMonth(date))
@@ -83,49 +77,39 @@ export default function CalendarPage() {
     if (!activeDate || sliding) return
     slideDir.current = direction === 'next' ? 'left' : 'right'
     setSliding(true)
-
-    const newDate = direction === 'next'
-      ? addMonths(activeDate, 1)
-      : subMonths(activeDate, 1)
-
+    const newDate = direction === 'next' ? addMonths(activeDate, 1) : subMonths(activeDate, 1)
     setTimeout(async () => {
       setActiveDate(newDate)
       setSliding(false)
-
-      // Check if the new edge month is cached
-      const edgeMonth = direction === 'next'
-        ? addMonths(newDate, 5)
-        : subMonths(newDate, 5)
+      const edgeMonth = direction === 'next' ? addMonths(newDate, 5) : subMonths(newDate, 5)
       const edgeKey = getMonthKey(edgeMonth)
-
       if (!cache[edgeKey]) {
-        // Fetch fresh 5-month window centered on new date
         const eventsData = await fetch(`/api/events?month=${getMonthKey(newDate)}`).then((r) => r.json())
         setCache(buildCache(newDate, eventsData))
       }
-    }, 300)
+    }, 150)
   }
 
   if (!activeDate || initialLoading) {
     return (
-      <div className="page-wrapper">
+      <div className="fs-page">
         <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
-          <div className="h-8 w-48 bg-stone-100 animate-pulse rounded-lg mb-2" />
-          <div className="h-4 w-32 bg-stone-100 animate-pulse rounded-lg mb-6" />
-          <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden">
-            <div className="grid grid-cols-7 border-b border-stone-100">
+          <div className="h-8 w-48 bg-[var(--fs-border)] animate-pulse rounded-lg mb-2" />
+          <div className="h-4 w-32 bg-[var(--fs-border)] animate-pulse rounded-lg mb-6" />
+          <div className="fs-card rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-7 border-b border-[var(--fs-border-light)]">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div key={i} className="py-3 flex justify-center">
-                  <div className="w-6 h-3 bg-stone-100 animate-pulse rounded" />
+                  <div className="w-6 h-3 bg-[var(--fs-border)] animate-pulse rounded" />
                 </div>
               ))}
             </div>
             <div className="grid grid-cols-7">
               {Array.from({ length: 42 }).map((_, i) => (
-                <div key={i} className="h-[72px] sm:h-[120px] p-2 border-b border-r border-stone-50">
-                  <div className="w-5 h-5 rounded-full bg-stone-100 animate-pulse mb-2" />
-                  <div className="h-2.5 rounded-lg bg-stone-100 animate-pulse mb-1.5 w-3/4" />
-                  <div className="h-2.5 rounded-lg bg-stone-100 animate-pulse w-1/2" />
+                <div key={i} className="h-[72px] sm:h-[120px] p-2 border-b border-r border-[var(--fs-border-light)]">
+                  <div className="w-5 h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
+                  <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
+                  <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
                 </div>
               ))}
             </div>
@@ -155,11 +139,7 @@ export default function CalendarPage() {
     await fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: newTitle,
-        event_date: format(selectedDay, 'yyyy-MM-dd'),
-        assigned_to: newAssignedTo,
-      }),
+      body: JSON.stringify({ title: newTitle, event_date: format(selectedDay, 'yyyy-MM-dd'), assigned_to: newAssignedTo }),
     })
     await refreshAppointments()
     setSaving(false)
@@ -193,144 +173,104 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="page-wrapper">
+    <div className="fs-page">
       <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="fs-topbar rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-stone-800 tracking-tight">
-              Family Schedule
+            <h1 className="text-lg font-semibold" style={{ color: 'var(--fs-honey-dark)' }}>
+              Family<span style={{ color: 'var(--fs-honey)' }}> </span>Schedule
             </h1>
-            <p className="text-stone-400 text-sm mt-0.5 transition-all duration-300">
+            <p className="text-xs mt-0.5 transition-all duration-300" style={{ color: 'var(--fs-text-muted)' }}>
               {format(activeDate, 'MMMM yyyy')}
             </p>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => navigate('prev')}
-              disabled={sliding}
-              className="w-8 h-8 rounded-full bg-white shadow-sm hover:shadow-md transition text-stone-500 flex items-center justify-center text-lg disabled:opacity-50"
-            >
-              ‹
-            </button>
+            <button onClick={() => navigate('prev')} disabled={sliding}
+              className="fs-icon-btn disabled:opacity-50">‹</button>
             <button
               onClick={() => {
                 const today = new Date()
                 if (getMonthKey(today) !== monthKey) {
                   slideDir.current = today > activeDate ? 'left' : 'right'
                   setSliding(true)
-                  setTimeout(() => {
-                    setActiveDate(today)
-                    setSliding(false)
-                  }, 300)
+                  setTimeout(() => { setActiveDate(today); setSliding(false) }, 300)
                 }
               }}
-              className="px-3 py-1.5 rounded-full bg-white shadow-sm hover:shadow-md transition text-stone-500 text-xs font-semibold tracking-wide"
-            >
-              Today
-            </button>
-            <button
-              onClick={() => navigate('next')}
-              disabled={sliding}
-              className="w-8 h-8 rounded-full bg-white shadow-sm hover:shadow-md transition text-stone-500 flex items-center justify-center text-lg disabled:opacity-50"
-            >
-              ›
-            </button>
+              className="px-3 py-1.5 rounded-full text-xs font-medium transition"
+              style={{ background: 'var(--fs-surface)', color: 'var(--fs-text-muted)', border: '0.5px solid var(--fs-border)' }}
+            >Today</button>
+            <button onClick={() => navigate('next')} disabled={sliding}
+              className="fs-icon-btn disabled:opacity-50">›</button>
           </div>
+        </div>
+
+        {/* Tab bar */}
+        <div className="fs-tab-bar rounded-xl mb-4 flex px-1 py-1 gap-1">
+          <button className="fs-tab active flex-1 rounded-lg">Calendar</button>
+          <button className="fs-tab flex-1 rounded-lg">Agenda</button>
+          <button className="fs-tab flex-1 rounded-lg">Year</button>
         </div>
 
         {/* Legend */}
         <Legend members={members} />
 
-        {/* Carousel wrapper */}
+        {/* Calendar */}
         <div className="overflow-hidden rounded-2xl">
           <div
             className="transition-transform duration-300 ease-in-out"
             style={{
+              opacity: sliding ? 0 : 1,
               transform: sliding
-                ? `translateX(${slideDir.current === 'left' ? '-4%' : '4%'})`
+                ? `translateX(${slideDir.current === 'left' ? '-12px' : '12px'})`
                 : 'translateX(0)',
-              opacity: sliding ? 0.6 : 1,
-              transition: 'transform 300ms ease-in-out, opacity 300ms ease-in-out',
+              transition: sliding
+                ? 'opacity 150ms ease-in, transform 150ms ease-in'
+                : 'opacity 200ms ease-out, transform 200ms ease-out',
             }}
           >
             <CalendarGrid
-              days={days}
-              activeDate={activeDate}
-              shiftDays={monthData.shiftDays}
-              appointments={monthData.appointments}
-              members={members}
-              loading={false}
-              startPadding={startPadding}
-              endPadding={endPadding}
-              onDayClick={(day) => {
-                setDayDetailDay(day)
-                setDayDetailOpen(true)
-              }}
-              onApptClick={(appt) => {
-                setSelectedAppt(appt)
-                setApptModalOpen(true)
-              }}
-              onDateNumberClick={(day) => {
-                setDayDetailDay(day)
-                setDayDetailOpen(true)
-              }}
+              days={days} activeDate={activeDate} shiftDays={monthData.shiftDays}
+              appointments={monthData.appointments} members={members} loading={false}
+              startPadding={startPadding} endPadding={endPadding}
+              onDayClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
+              onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
+              onDateNumberClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
             />
           </div>
         </div>
       </div>
 
-      {/* Modals */}
       {modalOpen && selectedDay && (
         <AddAppointmentModal
-          selectedDay={selectedDay}
-          members={members}
-          newTitle={newTitle}
-          newAssignedTo={newAssignedTo}
-          saving={saving}
-          onClose={() => setModalOpen(false)}
-          onTitleChange={setNewTitle}
-          onAssignedChange={setNewAssignedTo}
-          onSave={handleSave}
+          selectedDay={selectedDay} members={members} newTitle={newTitle}
+          newAssignedTo={newAssignedTo} saving={saving}
+          onClose={() => setModalOpen(false)} onTitleChange={setNewTitle}
+          onAssignedChange={setNewAssignedTo} onSave={handleSave}
         />
       )}
-
       {apptModalOpen && selectedAppt && (
         <AppointmentDetailModal
-          appointment={selectedAppt}
-          memberColor={getMemberColor(selectedAppt.assigned_to)}
-          members={members}
-          deleting={deleting}
-          saving={editSaving}
-          onClose={() => setApptModalOpen(false)}
-          onDelete={handleDelete}
-          onSave={handleEdit}
+          appointment={selectedAppt} memberColor={getMemberColor(selectedAppt.assigned_to)}
+          members={members} deleting={deleting} saving={editSaving}
+          onClose={() => setApptModalOpen(false)} onDelete={handleDelete} onSave={handleEdit}
         />
       )}
-
       {dayDetailOpen && dayDetailDay && (
         <DayDetailModal
           day={dayDetailDay}
           appointments={monthData.appointments.filter(
             (a) => a.event_date.slice(0, 10) === format(dayDetailDay, 'yyyy-MM-dd')
           )}
-          members={members}
-          shiftDays={monthData.shiftDays}
+          members={members} shiftDays={monthData.shiftDays}
           onClose={() => setDayDetailOpen(false)}
           onAddClick={() => {
-            setSelectedDay(dayDetailDay)
-            setNewTitle('')
-            setNewAssignedTo(members[0]?.name ?? '')
-            setDayDetailOpen(false)
-            setModalOpen(true)
+            setSelectedDay(dayDetailDay); setNewTitle(''); setNewAssignedTo(members[0]?.name ?? '')
+            setDayDetailOpen(false); setModalOpen(true)
           }}
-          onApptClick={(appt) => {
-            setSelectedAppt(appt)
-            setDayDetailOpen(false)
-            setApptModalOpen(true)
-          }}
+          onApptClick={(appt) => { setSelectedAppt(appt); setDayDetailOpen(false); setApptModalOpen(true) }}
         />
       )}
     </div>

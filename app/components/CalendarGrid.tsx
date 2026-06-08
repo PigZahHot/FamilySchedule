@@ -5,16 +5,9 @@ const WEEKDAYS_LONG = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const WEEKDAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 interface Props {
-  days: Date[]
-  activeDate: Date
-  shiftDays: ShiftDay[]
-  appointments: Appointment[]
-  members: FamilyMember[]
-  loading: boolean
-  startPadding: number
-  endPadding: number
-  onDayClick: (day: Date) => void
-  onApptClick: (appt: Appointment) => void
+  days: Date[]; activeDate: Date; shiftDays: ShiftDay[]; appointments: Appointment[]
+  members: FamilyMember[]; loading: boolean; startPadding: number; endPadding: number
+  onDayClick: (day: Date) => void; onApptClick: (appt: Appointment) => void
   onDateNumberClick: (day: Date) => void
 }
 
@@ -22,25 +15,16 @@ function getShift(date: Date, shiftDays: ShiftDay[]): ShiftResult | null {
   const key = format(date, 'yyyy-MM-dd')
   return shiftDays.find((s) => s.date === key)?.shift ?? null
 }
-
 function getHoliday(date: Date, shiftDays: ShiftDay[]): string | null {
   const key = format(date, 'yyyy-MM-dd')
   return shiftDays.find((s) => s.date === key)?.holiday ?? null
 }
-
 function getDayAppointments(date: Date, appointments: Appointment[]): Appointment[] {
   const key = format(date, 'yyyy-MM-dd')
   return appointments.filter((a) => a.event_date.slice(0, 10) === key)
 }
-
 function getMemberColor(name: string, members: FamilyMember[]): string {
   return members.find((m) => m.name === name)?.theme_color ?? '#94a3b8'
-}
-
-function shiftStyle(type: string) {
-  if (type === 'Day') return { icon: '☀️' }
-  if (type === 'Night') return { icon: '🌙' }
-  return { icon: '' }
 }
 
 export default function CalendarGrid({
@@ -48,11 +32,12 @@ export default function CalendarGrid({
   loading, startPadding, endPadding, onDayClick, onApptClick, onDateNumberClick
 }: Props) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-stone-100">
+    <div className="fs-card rounded-2xl overflow-hidden">
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 border-b border-stone-100">
+      <div className="grid grid-cols-7 border-b border-[var(--fs-border-light)]">
         {WEEKDAYS_LONG.map((d, i) => (
-          <div key={d} className="py-3 text-center text-xs font-semibold text-stone-400 uppercase tracking-widest">
+          <div key={d} className="py-3 text-center text-xs font-medium uppercase tracking-widest"
+            style={{ color: 'var(--fs-text-muted)' }}>
             <span className="hidden sm:inline">{WEEKDAYS_LONG[i]}</span>
             <span className="sm:hidden">{WEEKDAYS_SHORT[i]}</span>
           </div>
@@ -62,17 +47,18 @@ export default function CalendarGrid({
       {loading ? (
         <div className="grid grid-cols-7">
           {Array.from({ length: 42 }).map((_, i) => (
-            <div key={i} className="h-[72px] sm:h-[120px] p-1.5 sm:p-2 border-b border-r border-stone-50">
-              <div className="w-5 h-5 rounded-full bg-stone-100 animate-pulse mb-2" />
-              <div className="h-2.5 rounded-lg bg-stone-100 animate-pulse mb-1.5 w-3/4" />
-              <div className="h-2.5 rounded-lg bg-stone-100 animate-pulse w-1/2" />
+            <div key={i} className="h-[72px] sm:h-[120px] p-1.5 sm:p-2 border-b border-r border-[var(--fs-border-light)]">
+              <div className="w-5 h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
+              <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
+              <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
             </div>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-7">
           {Array.from({ length: startPadding }).map((_, i) => (
-            <div key={`pad-${i}`} className="h-[72px] sm:h-[120px] border-b border-r border-stone-50 bg-stone-50/30" />
+            <div key={`pad-${i}`} className="h-[72px] sm:h-[120px] border-b border-r border-[var(--fs-border-light)]"
+              style={{ background: 'var(--fs-bg)' }} />
           ))}
 
           {days.map((day) => {
@@ -86,78 +72,70 @@ export default function CalendarGrid({
               <div
                 key={day.toISOString()}
                 onClick={() => onDayClick(day)}
-                className={`h-[72px] sm:h-[120px] p-1.5 sm:p-2 border-b border-r border-stone-50 cursor-pointer transition-colors hover:bg-stone-50/70 ${!inMonth ? 'opacity-30' : ''
-                  } ${today ? 'bg-amber-50/30' : ''}`}
+                className={`fs-cell h-[72px] sm:h-[120px] p-1.5 sm:p-2 border-b border-r border-[var(--fs-border-light)] cursor-pointer transition-colors hover:bg-[var(--fs-bg)] ${today ? 'fs-cell-today' : ''} ${!inMonth ? 'opacity-30' : ''}`}
               >
                 {/* Top row: date + shift icon */}
                 <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDateNumberClick(day)
-                    }}
-                    className={`w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full text-xs font-semibold transition hover:bg-stone-200 ${today ? 'bg-stone-800 text-white' : 'text-stone-500'
-                      }`}
+                    onClick={(e) => { e.stopPropagation(); onDateNumberClick(day) }}
+                    className={today ? 'fs-today-num' : 'w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full text-xs font-medium transition hover:bg-[var(--fs-border-light)]'}
+                    style={!today ? { color: 'var(--fs-text-muted)' } : undefined}
                   >
                     {format(day, 'd')}
                   </button>
                   {shift && shift.type !== 'Off' && (
                     <span className="text-[10px] sm:text-xs leading-none opacity-80">
-                      {shiftStyle(shift.type).icon}
+                      {shift.type === 'Day' ? '☀️' : '🌙'}
                     </span>
                   )}
                 </div>
 
-                {/* Holiday label — desktop only */}
+                {/* Holiday — desktop only */}
                 {holiday && (
-                  <div className="hidden sm:block text-[9px] text-red-400 font-semibold truncate leading-tight mb-0.5">
+                  <div className="hidden sm:block text-[9px] font-medium truncate leading-tight mb-0.5"
+                    style={{ color: 'var(--fs-holiday)' }}>
                     🇵🇭 {holiday}
                   </div>
                 )}
 
-                {/* Desktop: appointment badges */}
+                {/* Desktop: shift badge + appointment chips */}
                 <div className="hidden sm:block">
-                  {appts.slice(0, 2).map((a) => (
-                    <div
-                      key={a.id}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onApptClick(a)
-                      }}
-                      className="text-xs rounded-lg px-1.5 py-0.5 mb-0.5 text-white truncate cursor-pointer hover:opacity-80 transition font-medium member-color"
-                      style={{ '--member-color': getMemberColor(a.assigned_to, members) } as React.CSSProperties}
-                    >
-                      {a.title}
-                    </div>
-                  ))}
+                  {appts.slice(0, 2).map((a) => {
+                    const color = getMemberColor(a.assigned_to, members)
+                    return (
+                      <div key={a.id}
+                        onClick={(e) => { e.stopPropagation(); onApptClick(a) }}
+                        className="fs-chip block mt-0.5 cursor-pointer hover:opacity-80 transition"
+                        style={{ background: color + '22', color: color }}
+                      >
+                        {a.title}
+                      </div>
+                    )
+                  })}
                   {appts.length > 2 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDateNumberClick(day)
-                      }}
-                      className="text-xs text-stone-400 px-1 mt-0.5 font-medium hover:text-stone-600 transition"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); onDateNumberClick(day) }}
+                      className="text-[10px] mt-0.5 font-medium hover:opacity-80 transition"
+                      style={{ color: 'var(--fs-text-muted)' }}>
                       +{appts.length - 2} more
                     </button>
                   )}
                 </div>
 
                 {/* Mobile: dot indicators */}
-                {(appts.length > 0 || holiday) && (
+                {(appts.length > 0 || holiday || (shift && shift.type !== 'Off')) && (
                   <div className="flex sm:hidden gap-0.5 flex-wrap mt-1">
-                    {holiday && (
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-red-400" />
+                    {shift && shift.type !== 'Off' && (
+                      <span className={`fs-dot ${shift.type === 'Day' ? 'fs-dot-day' : 'fs-dot-night'}`} />
                     )}
-                    {appts.slice(0, 3).map((a) => (
-                      <span
-                        key={a.id}
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: getMemberColor(a.assigned_to, members) }}
-                      />
+                    {holiday && <span className="fs-dot fs-dot-holiday" />}
+                    {appts.slice(0, 2).map((a) => (
+                      <span key={a.id} className="fs-dot"
+                        style={{ backgroundColor: getMemberColor(a.assigned_to, members) }} />
                     ))}
-                    {appts.length > 3 && (
-                      <span className="text-[9px] text-stone-400 leading-none mt-0.5">+{appts.length - 3}</span>
+                    {appts.length > 2 && (
+                      <span className="text-[9px] leading-none mt-0.5" style={{ color: 'var(--fs-text-muted)' }}>
+                        +{appts.length - 2}
+                      </span>
                     )}
                   </div>
                 )}
@@ -166,7 +144,8 @@ export default function CalendarGrid({
           })}
 
           {Array.from({ length: endPadding }).map((_, i) => (
-            <div key={`end-pad-${i}`} className="h-[72px] sm:h-[120px] border-b border-r border-stone-50 bg-stone-50/30" />
+            <div key={`end-pad-${i}`} className="h-[72px] sm:h-[120px] border-b border-r border-[var(--fs-border-light)]"
+              style={{ background: 'var(--fs-bg)' }} />
           ))}
         </div>
       )}
