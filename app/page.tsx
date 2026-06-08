@@ -93,7 +93,7 @@ export default function CalendarPage() {
   if (!activeDate || initialLoading) {
     return (
       <div className="fs-page">
-        <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
+        <div className="max-w-5xl mx-auto px-4 pt-4 pb-4">
           <div className="h-8 w-48 bg-[var(--fs-border)] animate-pulse rounded-lg mb-2" />
           <div className="h-4 w-32 bg-[var(--fs-border)] animate-pulse rounded-lg mb-6" />
           <div className="fs-card rounded-2xl overflow-hidden">
@@ -174,7 +174,7 @@ export default function CalendarPage() {
 
   return (
     <div className="fs-page">
-      <div className="max-w-5xl mx-auto px-4 pt-8 pb-12">
+      <div className="max-w-5xl mx-auto px-4 pt-6 pb-4">
 
         {/* Header */}
         <div className="fs-topbar rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">

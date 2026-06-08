@@ -51,17 +51,17 @@ export default function CalendarGrid({
       {loading ? (
         <div className="grid grid-cols-7">
           {Array.from({ length: 42 }).map((_, i) => (
-            <div key={i} className="aspect-square sm:aspect-auto sm:h-[120px] p-1.5 sm:p-2 border-b border-r border-[var(--fs-border-light)]">
-              <div className="w-5 h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
-              <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
-              <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
+            <div key={i} className="h-[60px] sm:h-[110px] p-1 sm:p-2 border-b border-r border-[var(--fs-border-light)]">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
+              <div className="h-2 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
+              <div className="h-2 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
             </div>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-7">
           {Array.from({ length: startPadding }).map((_, i) => (
-            <div key={`pad-${i}`} className="aspect-square sm:aspect-auto sm:h-[120px] border-b border-r border-[var(--fs-border-light)]"
+            <div key={`pad-${i}`} className="h-[60px] sm:h-[110px] border-b border-r border-[var(--fs-border-light)]"
               style={{ background: 'var(--fs-bg)' }} />
           ))}
 
@@ -77,19 +77,19 @@ export default function CalendarGrid({
               <div
                 key={day.toISOString()}
                 onClick={() => onDayClick(day)}
-                className={`fs-cell aspect-square sm:aspect-auto sm:h-[120px] p-1.5 sm:p-2 border-b border-r border-[var(--fs-border-light)] cursor-pointer transition-colors hover:bg-[var(--fs-bg)] ${today ? 'fs-cell-today' : ''} ${!inMonth ? 'opacity-30' : ''}`}
+                className={`fs-cell h-[60px] sm:h-[110px] p-1 sm:p-2 border-b border-r border-[var(--fs-border-light)] cursor-pointer transition-colors hover:bg-[var(--fs-bg)] ${today ? 'fs-cell-today' : ''} ${!inMonth ? 'opacity-30' : ''}`}
               >
                 {/* Top row: date + shift icon */}
-                <div className="flex items-start justify-between mb-1 sm:mb-1.5">
+                <div className="flex items-start justify-between mb-0.5 sm:mb-1.5">
                   <button
                     onClick={(e) => { e.stopPropagation(); onDateNumberClick(day) }}
-                    className={`${today ? 'fs-today-num' : 'w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full text-xs font-medium transition hover:bg-[var(--fs-border-light)]'} -ml-1 sm:-ml-1.5 -mt-0.5 sm:-mt-1`}
+                    className={`${today ? 'fs-today-num' : 'text-[10px] sm:text-xs font-medium hover:bg-[var(--fs-border-light)]'} w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center rounded-full transition -ml-0.5 sm:-ml-2 -mt-0.5 sm:-mt-1.5`}
                     style={!today ? { color: 'var(--fs-text-muted)' } : undefined}
                   >
                     {format(day, 'd')}
                   </button>
                   {shift && shift.type !== 'Off' && (
-                    <span className="text-[10px] sm:text-xs leading-none opacity-80">
+                    <span className="text-[8px] sm:text-xs leading-none opacity-80 mt-0.5 sm:mt-0">
                       {shift.type === 'Day' ? '☀️' : '🌙'}
                     </span>
                   )}
@@ -137,9 +137,9 @@ export default function CalendarGrid({
                 {/* Mobile: dot indicators */}
                 {(appts.length > 0 || holiday || yearlyEvent) && (
                   <div className="flex sm:hidden gap-0.5 flex-wrap mt-1">
-                    {holiday && <span className="text-[10px] leading-none">🎉</span>}
+                    {holiday && <span className="text-[8px] sm:text-[10px] leading-none">🎉</span>}
                     {yearlyEvent && (
-                      <span className="text-[10px] leading-none">
+                      <span className="text-[8px] sm:text-[10px] leading-none">
                         {yearlyEvent.label === 'Birthday' ? '🎂' : yearlyEvent.label === 'Anniversary' ? '💍' : yearlyEvent.label === 'Holiday' ? '🎉' : '📅'}
                       </span>
                     )}
@@ -148,7 +148,7 @@ export default function CalendarGrid({
                         style={{ backgroundColor: getMemberColor(a.assigned_to, members) }} />
                     ))}
                     {appts.length > 2 && (
-                      <span className="text-[9px] leading-none mt-0.5" style={{ color: 'var(--fs-text-muted)' }}>
+                      <span className="text-[7px] leading-none mt-0.5" style={{ color: 'var(--fs-text-muted)' }}>
                         +{appts.length - 2}
                       </span>
                     )}
@@ -159,7 +159,7 @@ export default function CalendarGrid({
           })}
 
           {Array.from({ length: endPadding }).map((_, i) => (
-            <div key={`end-pad-${i}`} className="aspect-square sm:aspect-auto sm:h-[120px] border-b border-r border-[var(--fs-border-light)]"
+            <div key={`end-pad-${i}`} className="h-[60px] sm:h-[110px] border-b border-r border-[var(--fs-border-light)]"
               style={{ background: 'var(--fs-bg)' }} />
           ))}
         </div>
