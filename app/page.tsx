@@ -101,7 +101,7 @@ export default function CalendarPage() {
       setAnimState('enter')
       setTimeout(() => {
         setAnimState('idle')
-      }, 300)
+      }, 400)
 
       // Prefetch edge month
       const edgeMonth = direction === 'next' ? addMonths(newDate, 5) : subMonths(newDate, 5)
@@ -110,22 +110,25 @@ export default function CalendarPage() {
         fetch(`/api/events?month=${getMonthKey(newDate)}`).then((r) => r.json())
           .then((eventsData) => setCache((prev) => ({ ...prev, ...buildCache(newDate, eventsData) })))
       }
-    }, 200)
+    }, 400)
   }
 
-  function getAnimStyle(): React.CSSProperties {
-    if (animState === 'idle') return { opacity: 1, transform: 'translateX(0) scale(1)' }
-    if (animState === 'exit') return {
-      opacity: 0,
-      transform: `translateX(${animDir === 'left' ? '-40px' : '40px'}) scale(0.97)`,
-      transition: 'opacity 200ms cubic-bezier(0.4,0,1,1), transform 200ms cubic-bezier(0.4,0,1,1)',
-    }
-    // enter
-    return {
-      opacity: 1,
-      transform: 'translateX(0) scale(1)',
-      transition: 'opacity 300ms cubic-bezier(0,0,0.2,1), transform 300ms cubic-bezier(0,0,0.2,1)',
-    }
+  function getMainAnimClass() {
+    if (animState === 'idle') return ''
+    if (animDir === 'left') return animState === 'exit' ? 'anim-main-next-exit' : 'anim-main-next-enter'
+    return animState === 'exit' ? 'anim-main-prev-exit' : 'anim-main-prev-enter'
+  }
+
+  function getLeftAnimClass() {
+    if (animState === 'idle') return ''
+    if (animDir === 'left') return animState === 'exit' ? 'anim-left-next-exit' : 'anim-left-next-enter'
+    return animState === 'exit' ? 'anim-left-prev-exit' : 'anim-left-prev-enter'
+  }
+
+  function getRightAnimClass() {
+    if (animState === 'idle') return ''
+    if (animDir === 'left') return animState === 'exit' ? 'anim-right-next-exit' : 'anim-right-next-enter'
+    return animState === 'exit' ? 'anim-right-prev-exit' : 'anim-right-prev-enter'
   }
 
   const allShiftDays = Object.values(cache).flatMap((m) => m.shiftDays)
@@ -230,6 +233,88 @@ export default function CalendarPage() {
 
   return (
     <div className="fs-page">
+      <style>{`
+        .anim-main-next-exit,
+        .anim-main-next-enter,
+        .anim-main-prev-exit,
+        .anim-main-prev-enter { transform-origin: bottom center; }
+
+        .anim-main-next-exit { animation: mainNextExit 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+        .anim-main-next-enter { animation: mainNextEnter 400ms cubic-bezier(0, 0, 0.2, 1) forwards; }
+        .anim-main-prev-exit { animation: mainPrevExit 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+        .anim-main-prev-enter { animation: mainPrevEnter 400ms cubic-bezier(0, 0, 0.2, 1) forwards; }
+
+        @keyframes mainNextExit {
+          from { opacity: 1; transform: translateX(0) scale(1); }
+          to { opacity: 0.2; transform: translateX(-330px) scale(0.5); }
+        }
+        @keyframes mainNextEnter {
+          from { opacity: 0.2; transform: translateX(330px) scale(0.5); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes mainPrevExit {
+          from { opacity: 1; transform: translateX(0) scale(1); }
+          to { opacity: 0.2; transform: translateX(330px) scale(0.5); }
+        }
+        @keyframes mainPrevEnter {
+          from { opacity: 0.2; transform: translateX(-330px) scale(0.5); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        .anim-left-next-exit,
+        .anim-left-next-enter,
+        .anim-left-prev-exit,
+        .anim-left-prev-enter { transform-origin: bottom center; }
+
+        .anim-left-next-exit { animation: leftNextExit 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+        .anim-left-next-enter { animation: leftNextEnter 400ms cubic-bezier(0, 0, 0.2, 1) forwards; }
+        .anim-left-prev-exit { animation: leftPrevExit 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+        .anim-left-prev-enter { animation: leftPrevEnter 400ms cubic-bezier(0, 0, 0.2, 1) forwards; }
+
+        @keyframes leftNextExit {
+          from { opacity: 1; transform: translateX(0) scale(1); }
+          to { opacity: 0; transform: translateX(-330px) scale(0.5); }
+        }
+        @keyframes leftNextEnter {
+          from { opacity: 0.2; transform: translateX(330px) scale(2.0); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes leftPrevExit {
+          from { opacity: 1; transform: translateX(0) scale(1); }
+          to { opacity: 0.2; transform: translateX(330px) scale(2.0); }
+        }
+        @keyframes leftPrevEnter {
+          from { opacity: 0; transform: translateX(-330px) scale(0.5); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        .anim-right-next-exit,
+        .anim-right-next-enter,
+        .anim-right-prev-exit,
+        .anim-right-prev-enter { transform-origin: bottom center; }
+
+        .anim-right-next-exit { animation: rightNextExit 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+        .anim-right-next-enter { animation: rightNextEnter 400ms cubic-bezier(0, 0, 0.2, 1) forwards; }
+        .anim-right-prev-exit { animation: rightPrevExit 400ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+        .anim-right-prev-enter { animation: rightPrevEnter 400ms cubic-bezier(0, 0, 0.2, 1) forwards; }
+
+        @keyframes rightNextExit {
+          from { opacity: 1; transform: translateX(0) scale(1); }
+          to { opacity: 0.2; transform: translateX(-330px) scale(2.0); }
+        }
+        @keyframes rightNextEnter {
+          from { opacity: 0; transform: translateX(330px) scale(0.5); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes rightPrevExit {
+          from { opacity: 1; transform: translateX(0) scale(1); }
+          to { opacity: 0; transform: translateX(330px) scale(0.5); }
+        }
+        @keyframes rightPrevEnter {
+          from { opacity: 0.2; transform: translateX(-330px) scale(2.0); }
+          to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+      `}</style>
       <div className="max-w-[1600px] mx-auto px-4 pt-6 pb-4">
 
         {/* Header */}
@@ -316,42 +401,44 @@ export default function CalendarPage() {
           <div className="flex flex-col lg:flex-row items-end justify-center gap-4 lg:gap-6 mt-4">
             {/* Desktop: left mini calendar (Previous Month) */}
             <div className="hidden lg:block w-56 xl:w-64 shrink-0">
-              <MiniCalendar
-                date={prevDate}
-                shiftDays={prevData.shiftDays}
-                appointments={prevData.appointments}
-                members={members}
-                label={format(prevDate, 'MMMM yyyy')}
-                onClick={() => navigate('prev')}
-              />
+              <div className={getLeftAnimClass()}>
+                <MiniCalendar
+                  date={prevDate}
+                  shiftDays={prevData.shiftDays}
+                  appointments={prevData.appointments}
+                  members={members}
+                  label={format(prevDate, 'MMMM yyyy')}
+                  onClick={() => navigate('prev')}
+                />
+              </div>
             </div>
 
             {/* Main calendar */}
             <div className="flex-1 w-full max-w-5xl min-w-0">
-              <div style={{ overflow: 'hidden', borderRadius: '16px' }}>
-                <div style={getAnimStyle()}>
-                  <CalendarGrid
-                    days={days} activeDate={activeDate} shiftDays={monthData.shiftDays}
-                    appointments={monthData.appointments} members={members} loading={false}
-                    startPadding={startPadding} endPadding={endPadding}
-                    onDayClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
-                    onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
-                    onDateNumberClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
-                  />
-                </div>
+              <div className={getMainAnimClass()} style={{ overflow: 'hidden', borderRadius: '16px' }}>
+                <CalendarGrid
+                  days={days} activeDate={activeDate} shiftDays={monthData.shiftDays}
+                  appointments={monthData.appointments} members={members} loading={false}
+                  startPadding={startPadding} endPadding={endPadding}
+                  onDayClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
+                  onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
+                  onDateNumberClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
+                />
               </div>
             </div>
 
             {/* Desktop: right mini calendar (Next Month) */}
             <div className="hidden lg:block w-56 xl:w-64 shrink-0">
-              <MiniCalendar
-                date={nextDate}
-                shiftDays={nextData.shiftDays}
-                appointments={nextData.appointments}
-                members={members}
-                label={format(nextDate, 'MMMM yyyy')}
-                onClick={() => navigate('next')}
-              />
+              <div className={getRightAnimClass()}>
+                <MiniCalendar
+                  date={nextDate}
+                  shiftDays={nextData.shiftDays}
+                  appointments={nextData.appointments}
+                  members={members}
+                  label={format(nextDate, 'MMMM yyyy')}
+                  onClick={() => navigate('next')}
+                />
+              </div>
             </div>
           </div>
         )}
