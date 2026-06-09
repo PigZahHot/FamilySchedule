@@ -13,6 +13,7 @@ function getMemberColor(name: string, members: FamilyMember[]): string {
 
 export default function DayDetailModal({ day, appointments, members, shiftDays, onClose, onAddClick, onApptClick }: Props) {
     const holiday = shiftDays.find((s) => s.date === format(day, 'yyyy-MM-dd'))?.holiday
+    const yearlyEvent = shiftDays.find((s) => s.date === format(day, 'yyyy-MM-dd'))?.yearlyEvent
 
     return (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
@@ -33,8 +34,22 @@ export default function DayDetailModal({ day, appointments, members, shiftDays, 
                 {holiday && (
                     <div className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3"
                         style={{ background: '#fef2f2', border: '0.5px solid #fecaca' }}>
-                        <span className="text-sm">🇵🇭</span>
+                        <span className="text-sm">🎉</span>
                         <span className="text-xs font-medium" style={{ color: 'var(--fs-holiday)' }}>{holiday}</span>
+                    </div>
+                )}
+
+                {/* Yearly event banner */}
+                {yearlyEvent && (
+                    <div className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3"
+                        style={{ background: 'var(--fs-honey)' + '18', border: '0.5px solid ' + 'var(--fs-honey)' + '44' }}>
+                        <span className="text-sm">
+                            {yearlyEvent.label === 'Birthday' ? '🎂' : yearlyEvent.label === 'Anniversary' ? '💍' : yearlyEvent.label === 'Holiday' ? '🎉' : '📅'}
+                        </span>
+                        <div>
+                            <span className="text-xs font-medium" style={{ color: 'var(--fs-honey-dark)' }}>{yearlyEvent.title}</span>
+                            <span className="text-xs ml-1.5" style={{ color: 'var(--fs-text-muted)' }}>{yearlyEvent.label}</span>
+                        </div>
                     </div>
                 )}
 
