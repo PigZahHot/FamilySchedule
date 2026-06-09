@@ -54,6 +54,7 @@ export default function MiniCalendar({ date, shiftDays, appointments, members, l
                     const isDay = shiftType === 'Day'
                     const isNight = shiftType === 'Night'
                     const hasHoliday = !!shiftDay?.holiday
+                    const yearlyEvent = shiftDay?.yearlyEvent
 
                     return (
                         <div key={i} className="flex flex-col items-center">
@@ -83,6 +84,9 @@ export default function MiniCalendar({ date, shiftDays, appointments, members, l
                             <div className="flex gap-px justify-center" style={{ minHeight: '4px' }}>
                                 {hasHoliday && (
                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-holiday)' }} />
+                                )}
+                                {yearlyEvent && (
+                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-honey)' }} />
                                 )}
                                 {appts.slice(0, 1).map((a) => (
                                     <div key={a.id} style={{ width: '3px', height: '3px', borderRadius: '50%', background: getMemberColor(a.assigned_to, members) }} />
