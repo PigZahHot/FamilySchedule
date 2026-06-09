@@ -144,13 +144,15 @@ export default function CalendarPage() {
     setCache(buildCache(activeDate, eventsData))
   }
 
-  async function handleSave() {
-    if (!newTitle.trim() || !selectedDay) return
+  async function handleSave(dateOverride?: string) {
+    if (!newTitle.trim()) return
+    const eventDate = dateOverride ?? (selectedDay ? format(selectedDay, 'yyyy-MM-dd') : null)
+    if (!eventDate) return
     setSaving(true)
     await fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newTitle, event_date: format(selectedDay, 'yyyy-MM-dd'), assigned_to: newAssignedTo }),
+      body: JSON.stringify({ title: newTitle, event_date: eventDate, assigned_to: newAssignedTo }),
     })
     await refreshAppointments()
     setSaving(false)
