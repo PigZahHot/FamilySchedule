@@ -10,6 +10,7 @@ import Legend from '@/app/components/Legend'
 import AddEventModal from '@/app/components/AddAppointmentModal'
 import AppointmentDetailModal from '@/app/components/AppointmentDetailModal'
 import DayDetailModal from '@/app/components/DayDetailModal'
+import MonthYearPicker from '@/app/components/MonthYearPicker'
 
 type MonthCache = {
   [monthKey: string]: { shiftDays: ShiftDay[]; appointments: Appointment[] }
@@ -46,6 +47,8 @@ export default function CalendarPage() {
   const [dayDetailOpen, setDayDetailOpen] = useState(false)
   const [dayDetailDay, setDayDetailDay] = useState<Date | null>(null)
   const [editSaving, setEditSaving] = useState(false)
+
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   useEffect(() => {
     const today = new Date()
@@ -192,13 +195,36 @@ export default function CalendarPage() {
 
         {/* Header */}
         <div className="fs-topbar rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">
-          <div>
+          <div className="relative">
             <h1 className="text-lg font-semibold" style={{ color: 'var(--fs-honey-dark)' }}>
               Family<span style={{ color: 'var(--fs-honey)' }}> </span>Schedule
             </h1>
-            <p className="text-xs mt-0.5 transition-all duration-300" style={{ color: 'var(--fs-text-muted)' }}>
+            <button
+              onClick={() => setPickerOpen((o) => !o)}
+              className="text-xs mt-0.5 transition-all duration-300 flex items-center gap-1 hover:opacity-70"
+              style={{ color: 'var(--fs-text-muted)' }}
+            >
               {format(activeDate, 'MMMM yyyy')}
-            </p>
+              <span style={{ fontSize: '10px' }}>{pickerOpen ? '▲' : '▼'}</span>
+            </button>
+            {pickerOpen && (
+              <MonthYearPicker
+                activeDate={activeDate}
+                onSelect={(date) => {
+                  slideDir.current = date > activeDate ? 'left' : 'right'
+                  setSliding(true)
+                  setTimeout(() => {
+                    setActiveDate(date)
+                    setSliding(false)
+                    if (!cache[getMonthKey(date)]) {
+                      fetch(`/api/events?month=${getMonthKey(date)}`).then((r) => r.json())
+                        .then((eventsData) => setCache((prev) => ({ ...prev, ...buildCache(date, eventsData) })))
+                    }
+                  }, 150)
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+            )}
           </div>
           {activeView === 'calendar' && (
             <div className="flex items-center gap-1.5">
