@@ -58,6 +58,7 @@ function MiniMonth({ year, monthIndex, allShiftDays, allAppointments, members, o
                     const isDay = shiftType === 'Day'
                     const isNight = shiftType === 'Night'
                     const hasHoliday = !!shiftDay?.holiday
+                    const yearlyEvent = shiftDay?.yearlyEvent
 
                     return (
                         <div key={i}
@@ -92,6 +93,9 @@ function MiniMonth({ year, monthIndex, allShiftDays, allAppointments, members, o
                             <div className="flex gap-px justify-center" style={{ minHeight: '4px' }}>
                                 {hasHoliday && (
                                     <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-holiday)' }} />
+                                )}
+                                {yearlyEvent && (
+                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-honey)' }} />
                                 )}
                                 {appts.slice(0, 1).map((a) => (
                                     <div key={a.id} style={{ width: '3px', height: '3px', borderRadius: '50%', background: getMemberColor(a.assigned_to, members) }} />
