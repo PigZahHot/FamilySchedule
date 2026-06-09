@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths } from 'date-fns'
 import { Appointment, FamilyMember, ShiftDay } from '@/app/types/calendar'
 import CalendarGrid from '@/app/components/CalendarGrid'
+import MiniCalendar from '@/app/components/MiniCalendar'
 import YearView from '@/app/components/YearView'
 import AgendaView from '@/app/components/AgendaView'
 import Legend from '@/app/components/Legend'
@@ -25,12 +26,17 @@ function getMonthDays(date: Date) {
   return { days, startPadding, endPadding }
 }
 
+// Animation state type
+type AnimState = 'idle' | 'exit' | 'enter'
+
 export default function CalendarPage() {
   const [activeDate, setActiveDate] = useState<Date | null>(null)
+  const [displayDate, setDisplayDate] = useState<Date | null>(null) // what's currently visible
   const [cache, setCache] = useState<MonthCache>({})
   const [members, setMembers] = useState<FamilyMember[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
-  const [sliding, setSliding] = useState(false)
+  const [animState, setAnimState] = useState<AnimState>('idle')
+  const [animDir, setAnimDir] = useState<'left' | 'right'>('left')
   const [activeView, setActiveView] = useState<View>('calendar')
   const slideDir = useRef<'left' | 'right' | null>(null)
 
@@ -53,6 +59,7 @@ export default function CalendarPage() {
   useEffect(() => {
     const today = new Date()
     setActiveDate(today)
+    setDisplayDate(today)
     Promise.all([
       fetch(`/api/events?month=${getMonthKey(today)}`).then((r) => r.json()),
       fetch('/api/members').then((r) => r.json()),
@@ -81,48 +88,73 @@ export default function CalendarPage() {
   }
 
   async function navigate(direction: 'prev' | 'next') {
-    if (!activeDate || sliding) return
-    slideDir.current = direction === 'next' ? 'left' : 'right'
-    setSliding(true)
+    if (!activeDate || animState !== 'idle') return
+    const dir = direction === 'next' ? 'left' : 'right'
     const newDate = direction === 'next' ? addMonths(activeDate, 1) : subMonths(activeDate, 1)
-    setTimeout(async () => {
+    slideDir.current = dir
+    setAnimDir(dir)
+    setAnimState('exit')
+
+    setTimeout(() => {
       setActiveDate(newDate)
-      setSliding(false)
+      setDisplayDate(newDate)
+      setAnimState('enter')
+      setTimeout(() => {
+        setAnimState('idle')
+      }, 300)
+
+      // Prefetch edge month
       const edgeMonth = direction === 'next' ? addMonths(newDate, 5) : subMonths(newDate, 5)
       const edgeKey = getMonthKey(edgeMonth)
       if (!cache[edgeKey]) {
-        const eventsData = await fetch(`/api/events?month=${getMonthKey(newDate)}`).then((r) => r.json())
-        setCache(buildCache(newDate, eventsData))
+        fetch(`/api/events?month=${getMonthKey(newDate)}`).then((r) => r.json())
+          .then((eventsData) => setCache((prev) => ({ ...prev, ...buildCache(newDate, eventsData) })))
       }
-    }, 150)
+    }, 200)
   }
 
-  // Collect all cached data for year/agenda views
+  function getAnimStyle(): React.CSSProperties {
+    if (animState === 'idle') return { opacity: 1, transform: 'translateX(0) scale(1)' }
+    if (animState === 'exit') return {
+      opacity: 0,
+      transform: `translateX(${animDir === 'left' ? '-40px' : '40px'}) scale(0.97)`,
+      transition: 'opacity 200ms cubic-bezier(0.4,0,1,1), transform 200ms cubic-bezier(0.4,0,1,1)',
+    }
+    // enter
+    return {
+      opacity: 1,
+      transform: 'translateX(0) scale(1)',
+      transition: 'opacity 300ms cubic-bezier(0,0,0.2,1), transform 300ms cubic-bezier(0,0,0.2,1)',
+    }
+  }
+
   const allShiftDays = Object.values(cache).flatMap((m) => m.shiftDays)
   const allAppointments = Object.values(cache).flatMap((m) => m.appointments)
 
-  if (!activeDate || initialLoading) {
+  if (!activeDate || !displayDate || initialLoading) {
     return (
       <div className="fs-page">
-        <div className="max-w-5xl mx-auto px-4 pt-4 pb-4">
-          <div className="h-8 w-48 bg-[var(--fs-border)] animate-pulse rounded-lg mb-2" />
-          <div className="h-4 w-32 bg-[var(--fs-border)] animate-pulse rounded-lg mb-6" />
-          <div className="fs-card rounded-2xl overflow-hidden">
-            <div className="grid grid-cols-7 border-b border-[var(--fs-border-light)]">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="py-3 flex justify-center">
-                  <div className="w-6 h-3 bg-[var(--fs-border)] animate-pulse rounded" />
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7">
-              {Array.from({ length: 42 }).map((_, i) => (
-                <div key={i} className="h-[72px] sm:h-[120px] p-2 border-b border-r border-[var(--fs-border-light)]">
-                  <div className="w-5 h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
-                  <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
-                  <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
-                </div>
-              ))}
+        <div className="max-w-[1600px] mx-auto px-4 pt-4 pb-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="h-8 w-48 bg-[var(--fs-border)] animate-pulse rounded-lg mb-2" />
+            <div className="h-4 w-32 bg-[var(--fs-border)] animate-pulse rounded-lg mb-6" />
+            <div className="fs-card rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-7 border-b border-[var(--fs-border-light)]">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="py-3 flex justify-center">
+                    <div className="w-6 h-3 bg-[var(--fs-border)] animate-pulse rounded" />
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {Array.from({ length: 42 }).map((_, i) => (
+                  <div key={i} className="h-[72px] sm:h-[120px] p-2 border-b border-r border-[var(--fs-border-light)]">
+                    <div className="w-5 h-5 rounded-full bg-[var(--fs-border)] animate-pulse mb-2" />
+                    <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse mb-1.5 w-3/4" />
+                    <div className="h-2.5 rounded-lg bg-[var(--fs-border)] animate-pulse w-1/2" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -133,6 +165,11 @@ export default function CalendarPage() {
   const monthKey = getMonthKey(activeDate)
   const monthData = cache[monthKey] ?? { shiftDays: [], appointments: [] }
   const { days, startPadding, endPadding } = getMonthDays(activeDate)
+
+  const prevDate = subMonths(activeDate, 1)
+  const nextDate = addMonths(activeDate, 1)
+  const prevData = cache[getMonthKey(prevDate)] ?? { shiftDays: [], appointments: [] }
+  const nextData = cache[getMonthKey(nextDate)] ?? { shiftDays: [], appointments: [] }
 
   function getMemberColor(name: string): string {
     return members.find((m) => m.name === name)?.theme_color ?? '#94a3b8'
@@ -193,10 +230,10 @@ export default function CalendarPage() {
 
   return (
     <div className="fs-page">
-      <div className="max-w-5xl mx-auto px-4 pt-6 pb-4">
+      <div className="max-w-[1600px] mx-auto px-4 pt-6 pb-4">
 
         {/* Header */}
-        <div className="fs-topbar rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto fs-topbar rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">
           <div className="relative">
             <h1 className="text-lg font-semibold" style={{ color: 'var(--fs-honey-dark)' }}>
               Family<span style={{ color: 'var(--fs-honey)' }}> </span>Schedule
@@ -213,16 +250,19 @@ export default function CalendarPage() {
               <MonthYearPicker
                 activeDate={activeDate}
                 onSelect={(date) => {
-                  slideDir.current = date > activeDate ? 'left' : 'right'
-                  setSliding(true)
+                  setPickerOpen(false)
+                  setAnimDir(date > activeDate ? 'left' : 'right')
+                  setAnimState('exit')
                   setTimeout(() => {
                     setActiveDate(date)
-                    setSliding(false)
+                    setDisplayDate(date)
+                    setAnimState('enter')
+                    setTimeout(() => setAnimState('idle'), 300)
                     if (!cache[getMonthKey(date)]) {
                       fetch(`/api/events?month=${getMonthKey(date)}`).then((r) => r.json())
                         .then((eventsData) => setCache((prev) => ({ ...prev, ...buildCache(date, eventsData) })))
                     }
-                  }, 150)
+                  }, 200)
                 }}
                 onClose={() => setPickerOpen(false)}
               />
@@ -230,28 +270,33 @@ export default function CalendarPage() {
           </div>
           {activeView === 'calendar' && (
             <div className="flex items-center gap-1.5">
-              <button onClick={() => navigate('prev')} disabled={sliding}
+              <button onClick={() => navigate('prev')} disabled={animState !== 'idle'}
                 className="fs-icon-btn disabled:opacity-50">‹</button>
               <button
                 onClick={() => {
                   const today = new Date()
                   if (getMonthKey(today) !== monthKey) {
-                    slideDir.current = today > activeDate ? 'left' : 'right'
-                    setSliding(true)
-                    setTimeout(() => { setActiveDate(today); setSliding(false) }, 150)
+                    setAnimDir(today > activeDate ? 'left' : 'right')
+                    setAnimState('exit')
+                    setTimeout(() => {
+                      setActiveDate(today)
+                      setDisplayDate(today)
+                      setAnimState('enter')
+                      setTimeout(() => setAnimState('idle'), 300)
+                    }, 200)
                   }
                 }}
                 className="px-3 py-1.5 rounded-full text-xs font-medium transition"
                 style={{ background: 'var(--fs-surface)', color: 'var(--fs-text-muted)', border: '0.5px solid var(--fs-border)' }}
               >Today</button>
-              <button onClick={() => navigate('next')} disabled={sliding}
+              <button onClick={() => navigate('next')} disabled={animState !== 'idle'}
                 className="fs-icon-btn disabled:opacity-50">›</button>
             </div>
           )}
         </div>
 
         {/* Tab bar */}
-        <div className="fs-tab-bar rounded-xl mb-4 flex px-1 py-1 gap-1">
+        <div className="max-w-5xl mx-auto fs-tab-bar rounded-xl mb-4 flex px-1 py-1 gap-1">
           {tabs.map((tab) => (
             <button key={tab.key}
               onClick={() => setActiveView(tab.key)}
@@ -262,70 +307,102 @@ export default function CalendarPage() {
         </div>
 
         {/* Legend — only on calendar view */}
-        {activeView === 'calendar' && <Legend members={members} />}
+        <div className="max-w-5xl mx-auto">
+          {activeView === 'calendar' && <Legend members={members} />}
+        </div>
 
-        {/* Views */}
+        {/* ===== CALENDAR VIEW ===== */}
         {activeView === 'calendar' && (
-          <div className="overflow-hidden rounded-2xl">
-            <div style={{
-              opacity: sliding ? 0 : 1,
-              transform: sliding
-                ? `translateX(${slideDir.current === 'left' ? '-12px' : '12px'})`
-                : 'translateX(0)',
-              transition: sliding
-                ? 'opacity 150ms ease-in, transform 150ms ease-in'
-                : 'opacity 200ms ease-out, transform 200ms ease-out',
-            }}>
-              <CalendarGrid
-                days={days} activeDate={activeDate} shiftDays={monthData.shiftDays}
-                appointments={monthData.appointments} members={members} loading={false}
-                startPadding={startPadding} endPadding={endPadding}
-                onDayClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
-                onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
-                onDateNumberClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
+          <div className="flex flex-col lg:flex-row items-end justify-center gap-4 lg:gap-6 mt-4">
+            {/* Desktop: left mini calendar (Previous Month) */}
+            <div className="hidden lg:block w-56 xl:w-64 shrink-0">
+              <MiniCalendar
+                date={prevDate}
+                shiftDays={prevData.shiftDays}
+                appointments={prevData.appointments}
+                members={members}
+                label={format(prevDate, 'MMMM yyyy')}
+                onClick={() => navigate('prev')}
+              />
+            </div>
+
+            {/* Main calendar */}
+            <div className="flex-1 w-full max-w-5xl min-w-0">
+              <div style={{ overflow: 'hidden', borderRadius: '16px' }}>
+                <div style={getAnimStyle()}>
+                  <CalendarGrid
+                    days={days} activeDate={activeDate} shiftDays={monthData.shiftDays}
+                    appointments={monthData.appointments} members={members} loading={false}
+                    startPadding={startPadding} endPadding={endPadding}
+                    onDayClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
+                    onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
+                    onDateNumberClick={(day) => { setDayDetailDay(day); setDayDetailOpen(true) }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop: right mini calendar (Next Month) */}
+            <div className="hidden lg:block w-56 xl:w-64 shrink-0">
+              <MiniCalendar
+                date={nextDate}
+                shiftDays={nextData.shiftDays}
+                appointments={nextData.appointments}
+                members={members}
+                label={format(nextDate, 'MMMM yyyy')}
+                onClick={() => navigate('next')}
               />
             </div>
           </div>
         )}
 
+        {/* ===== AGENDA VIEW ===== */}
         {activeView === 'agenda' && (
-          <AgendaView
-            appointments={allAppointments}
-            shiftDays={allShiftDays}
-            members={members}
-            onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
-            onAddClick={() => {
-              setSelectedDay(null); setNewTitle(''); setNewAssignedTo(members[0]?.name ?? '')
-              setModalOpen(true)
-            }}
-          />
+          <div className="max-w-5xl mx-auto">
+            <AgendaView
+              appointments={allAppointments}
+              shiftDays={allShiftDays}
+              members={members}
+              onApptClick={(appt) => { setSelectedAppt(appt); setApptModalOpen(true) }}
+              onAddClick={() => {
+                setSelectedDay(null); setNewTitle(''); setNewAssignedTo(members[0]?.name ?? '')
+                setModalOpen(true)
+              }}
+            />
+          </div>
         )}
 
+        {/* ===== YEAR VIEW ===== */}
         {activeView === 'year' && (
-          <YearView
-            activeDate={activeDate}
-            allShiftDays={allShiftDays}
-            allAppointments={allAppointments}
-            members={members}
-            onMonthClick={(date) => {
-              setActiveDate(date)
-              setActiveView('calendar')
-            }}
-            onDayClick={(day) => {
-              setActiveDate(day)
-              setDayDetailDay(day)
-              setDayDetailOpen(true)
-              setActiveView('calendar')
-            }}
-            onYearChange={async (year) => {
-              const centerDate = new Date(year, 5, 1) // June of that year
-              const eventsData = await fetch(`/api/events?month=${format(centerDate, 'yyyy-MM')}`).then((r) => r.json())
-              setCache((prev) => ({ ...prev, ...buildCache(centerDate, eventsData) }))
-            }}
-          />
+          <div className="max-w-5xl mx-auto">
+            <YearView
+              activeDate={activeDate}
+              allShiftDays={allShiftDays}
+              allAppointments={allAppointments}
+              members={members}
+              onMonthClick={(date) => {
+                setActiveDate(date)
+                setDisplayDate(date)
+                setActiveView('calendar')
+              }}
+              onDayClick={(day) => {
+                setActiveDate(day)
+                setDisplayDate(day)
+                setDayDetailDay(day)
+                setDayDetailOpen(true)
+                setActiveView('calendar')
+              }}
+              onYearChange={async (year) => {
+                const centerDate = new Date(year, 5, 1)
+                const eventsData = await fetch(`/api/events?month=${format(centerDate, 'yyyy-MM')}`).then((r) => r.json())
+                setCache((prev) => ({ ...prev, ...buildCache(centerDate, eventsData) }))
+              }}
+            />
+          </div>
         )}
       </div>
 
+      {/* ===== MODALS ===== */}
       {modalOpen && (
         <AddEventModal
           selectedDay={selectedDay} members={members} newTitle={newTitle}
