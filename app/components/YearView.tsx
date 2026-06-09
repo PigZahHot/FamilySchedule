@@ -1,4 +1,5 @@
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday, getYear } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isToday } from 'date-fns'
+import { useState } from 'react'
 import { Appointment, FamilyMember, ShiftDay } from '@/app/types/calendar'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -11,6 +12,7 @@ interface Props {
     members: FamilyMember[]
     onMonthClick: (date: Date) => void
     onDayClick: (day: Date) => void
+    onYearChange: (year: number) => Promise<void>
 }
 
 function getMemberColor(name: string, members: FamilyMember[]): string {
@@ -37,7 +39,8 @@ function MiniMonth({ year, monthIndex, allShiftDays, allAppointments, members, o
             </p>
             <div className="grid grid-cols-7 mb-1">
                 {DAYS.map((d, i) => (
-                    <div key={i} className="text-center" style={{ fontSize: '8px', color: 'var(--fs-text-faint)', fontWeight: 500 }}>{d}</div>
+                    <div key={i} className="text-center"
+                        style={{ fontSize: '8px', color: 'var(--fs-text-faint)', fontWeight: 500 }}>{d}</div>
                 ))}
             </div>
             <div className="grid grid-cols-7 gap-y-0.5">
@@ -51,8 +54,9 @@ function MiniMonth({ year, monthIndex, allShiftDays, allAppointments, members, o
                     const shiftDay = allShiftDays.find((s) => s.date === dateStr)
                     const appts = allAppointments.filter((a) => a.event_date.slice(0, 10) === dateStr)
                     const today = isToday(day)
-                    const isDay = shiftDay?.shift?.type === 'Day'
-                    const isNight = shiftDay?.shift?.type === 'Night'
+                    const shiftType = shiftDay?.shift?.type
+                    const isDay = shiftType === 'Day'
+                    const isNight = shiftType === 'Night'
                     const hasHoliday = !!shiftDay?.holiday
 
                     return (
@@ -64,18 +68,31 @@ function MiniMonth({ year, monthIndex, allShiftDays, allAppointments, members, o
                             <div
                                 className="flex items-center justify-center rounded-full transition hover:opacity-80"
                                 style={{
-                                    width: '16px', height: '16px', fontSize: '8px', fontWeight: today ? 600 : 400,
-                                    background: today ? 'var(--fs-honey)' : 'transparent',
-                                    color: today ? '#fff' : 'var(--fs-text)',
+                                    width: '16px', height: '16px', fontSize: '8px',
+                                    fontWeight: today ? 600 : 400,
+                                    background: today
+                                        ? 'var(--fs-honey)'
+                                        : isDay
+                                            ? 'var(--fs-day-bg)'
+                                            : isNight
+                                                ? 'var(--fs-night-bg)'
+                                                : 'transparent',
+                                    color: today
+                                        ? '#fff'
+                                        : isDay
+                                            ? 'var(--fs-day-text)'
+                                            : isNight
+                                                ? 'var(--fs-night-text)'
+                                                : 'var(--fs-text)',
                                 }}
                             >
                                 {format(day, 'd')}
                             </div>
-                            {/* Dot row */}
+                            {/* Dot row for holidays and appointments */}
                             <div className="flex gap-px justify-center" style={{ minHeight: '4px' }}>
-                                {isDay && <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-day)' }} />}
-                                {isNight && <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-night)' }} />}
-                                {hasHoliday && <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-holiday)' }} />}
+                                {hasHoliday && (
+                                    <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--fs-holiday)' }} />
+                                )}
                                 {appts.slice(0, 1).map((a) => (
                                     <div key={a.id} style={{ width: '3px', height: '3px', borderRadius: '50%', background: getMemberColor(a.assigned_to, members) }} />
                                 ))}
@@ -88,13 +105,19 @@ function MiniMonth({ year, monthIndex, allShiftDays, allAppointments, members, o
     )
 }
 
-export default function YearView({ activeDate, allShiftDays, allAppointments, members, onMonthClick, onDayClick }: Props) {
-    const year = getYear(activeDate)
+export default function YearView({ activeDate, allShiftDays, allAppointments, members, onMonthClick, onDayClick, onYearChange }: Props) {
+    const [year, setYear] = useState(activeDate.getFullYear())
 
     return (
         <div>
-            <p className="text-sm font-semibold mb-4" style={{ color: 'var(--fs-text)' }}>{year}</p>
-            {/* Desktop: 4x3, Mobile: 2x6 */}
+            {/* Year navigation */}
+            <div className="flex items-center justify-between mb-4">
+                <button onClick={() => { const y = year - 1; setYear(y); onYearChange(y) }} className="fs-icon-btn">‹</button>
+                <p className="text-sm font-semibold" style={{ color: 'var(--fs-text)' }}>{year}</p>
+                <button onClick={() => { const y = year + 1; setYear(y); onYearChange(y) }} className="fs-icon-btn">›</button>
+            </div>
+
+            {/* Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {Array.from({ length: 12 }).map((_, i) => (
                     <MiniMonth key={i} year={year} monthIndex={i}

@@ -289,6 +289,11 @@ export default function CalendarPage() {
               setDayDetailOpen(true)
               setActiveView('calendar')
             }}
+            onYearChange={async (year) => {
+              const centerDate = new Date(year, 5, 1) // June of that year
+              const eventsData = await fetch(`/api/events?month=${format(centerDate, 'yyyy-MM')}`).then((r) => r.json())
+              setCache((prev) => ({ ...prev, ...buildCache(centerDate, eventsData) }))
+            }}
           />
         )}
       </div>
