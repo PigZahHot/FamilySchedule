@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Family Schedule Web Application
 
-## Getting Started
+A full-stack web application designed to track and coordinate family shift rotations, schedules, and calendars seamlessly.
 
-First, run the development server:
+## How to Interpret Shifts
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Day Shifts are from 10 am to 10 pm. Starting times are marked with a Sun Symbol (☀️)
+Night Shifts are from 10 pm to 10 am the following day. Starting times are marked with a Moon Symbol (🌙)
+
+## Features
+
+- **Automated Shift Calculation:** Dynamically computes work schedules based on custom rotational blocks (e.g., 4-on / 2-off work cycles).
+- **Custom Transition Gaps:** Intelligently handles custom transition buffers between shift types (such as specific gap lengths when shifting from Day to Night or Night to Day).
+- **Multiple Views:** Clean calendar grids, agenda lists, and year/month layouts built with Next.js.
+- **Admin Configuration:** Configurable backend API routes for managing shift exceptions and core configurations. Accessible through /admin in url, requires admin pin.
+- **Family Calendar View:** A visual representation of the family's shared schedule.
+- **Year / Month Calendar Views:** Tools to view and navigate the calendar on a monthly or yearly basis.
+- **Compact Calendar Grid:** A space-efficient grid view for displaying the calendar.
+- **Offline Support:** Progressive Web App (PWA) capabilities enable offline access and functionality.
+- **Responsive Design:** Optimized for various devices, including smartphones, tablets, and desktops.
+- **Family Login:** Secure login system for authenticated access to family-specific features.
+- **QR Code Login:** Secure login system for authenticated access to family-specific features. Accessible in Admin page
+
+---
+
+## Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org/) (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Database / Backend:** Node.js, PostgreSQL
+- **Date Utilities:** `date-fns`
+
+---
+
+## Project Structure
+
+```text
+├── app/
+│   ├── api/             # Backend API routes (shift config, exceptions)
+│   ├── components/      # Frontend UI components (CalendarGrid, AgendaView, YearView)
+│   └── page.tsx         # Main entry point
+├── lib/
+│   └── shift.ts         # Core shift rotation and gap calculation logic
+├── package.json
+└── README.md
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env.local` file in the root directory with the following keys:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+FAMILY_PASSPHRASE=your_family_passphrase
+ADMIN_PIN=your_admin_pin
+DATABASE_URL=postgres://username:password@localhost:5432/family_schedule
+```
