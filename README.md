@@ -4,8 +4,8 @@ A full-stack web application designed to track and coordinate family shift rotat
 
 ## How to Interpret Shifts
 
-Day Shifts are from 10 am to 10 pm. Starting times are marked with a Sun Symbol (☀️)
-Night Shifts are from 10 pm to 10 am the following day. Starting times are marked with a Moon Symbol (🌙)
+- Day Shifts are from 10 am to 10 pm. Starting times are marked with a Sun Symbol (☀️)
+- Night Shifts are from 10 pm to 10 am the following day. Starting times are marked with a Moon Symbol (🌙)
 
 ## Features
 
